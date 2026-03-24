@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Agenda</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e334d;
+    --accent: #4f8ef7;
+    --accent2: #7c6af7;
+    --green: #3ecf8e;
+    --orange: #f7934f;
+    --red: #f76f6f;
+    --text: #e8eaf6;
+    --text2: #8b90b8;
+    --text3: #5a5f80;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 12px;
+  }
+  .topbar h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -.3px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .topbar h1 span { color: var(--accent); }
+  .topbar-date {
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    color: var(--text2);
+    text-align: right;
+    line-height: 1.4;
+  }
+
+  /* ── NAV TABS ── */
+  .tabs {
+    display: flex;
+    gap: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px;
+    font-size: .82rem;
+    font-weight: 500;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all .2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── MAIN ── */
+  .main { padding: 18px 16px 100px; max-width: 700px; margin: 0 auto; }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+  .section-title {
+    font-size: .95rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    font-size: .68rem;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 20px;
+    padding: 2px 8px;
+  }
+  .badge.green { background: var(--green); }
+  .badge.orange { background: var(--orange); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: .8rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6fa0ff; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--text3); color: var(--text); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid transparent; }
+  .btn-danger:hover { background: rgba(247,111,111,.1); }
+  .btn-sm { padding: 5px 10px; font-size: .75rem; }
+  .btn-icon { padding: 6px; border-radius: 6px; line-height: 1; }
+
+  /* ── EVENT CARD ── */
+  .event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 15px;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    position: relative;
+    transition: border-color .2s;
+  }
+  .event-card:hover { border-color: var(--text3); }
+  .event-card.today { border-left: 3px solid var(--accent); }
+  .event-time {
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    color: var(--text2);
+    white-space: nowrap;
+    min-width: 90px;
+    padding-top: 2px;
+  }
+  .event-time .time-range { display: block; font-size: .76rem; color: var(--accent); font-weight: 500; }
+  .event-body { flex: 1; min-width: 0; }
+  .event-title { font-size: .88rem; font-weight: 500; color: var(--text); line-height: 1.35; }
+  .event-actions {
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .event-card:hover .event-actions { opacity: 1; }
+
+  /* ── DAY BLOCK ── */
+  .day-block { margin-bottom: 28px; }
+  .day-label {
+    font-size: .78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .day-label .day-today-pill {
+    font-size: .65rem;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 20px;
+    padding: 2px 8px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text3);
+    font-size: .85rem;
+  }
+  .empty svg { margin-bottom: 12px; opacity: .4; }
+
+  /* ── TASK ITEM ── */
+  .task-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 15px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    transition: border-color .2s;
+  }
+  .task-item:hover { border-color: var(--text3); }
+  .task-item.done { opacity: .5; }
+  .task-check {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    transition: all .15s;
+    background: none;
+  }
+  .task-item.done .task-check { background: var(--green); border-color: var(--green); }
+  .task-body { flex: 1; min-width: 0; }
+  .task-title { font-size: .88rem; color: var(--text); line-height: 1.35; }
+  .task-item.done .task-title { text-decoration: line-through; color: var(--text3); }
+  .task-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+  .task-item:hover .task-actions { opacity: 1; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.65);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px 18px 0 0;
+    width: 100%;
+    max-width: 700px;
+    padding: 24px 20px 36px;
+    transform: translateY(100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle {
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    margin: 0 auto 20px;
+  }
+  .modal h2 { font-size: 1rem; font-weight: 600; margin-bottom: 18px; }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: .78rem; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .88rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-select option { background: var(--surface2); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .form-actions .btn { flex: 1; justify-content: center; }
+
+  /* ── NOW INDICATOR ── */
+  .now-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+  }
+  .now-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+  .now-bar { flex: 1; height: 1px; background: var(--red); opacity: .6; }
+  .now-time { font-family: 'DM Mono', monospace; font-size: .68rem; color: var(--red); white-space: nowrap; }
+
+  /* ── CURRENT TIME CARD ── */
+  .current-slot {
+    background: linear-gradient(135deg, rgba(79,142,247,.12), rgba(124,106,247,.08));
+    border: 1px solid rgba(79,142,247,.3);
+    border-radius: var(--radius);
+    padding: 13px 15px;
+    margin-bottom: 12px;
+    font-size: .84rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .current-slot .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; flex-shrink: 0; }
+  @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.5; transform:scale(1.3); } }
+
+  /* ── VIEW toggle ── */
+  .view-toggle {
+    display: flex;
+    gap: 6px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .view-btn {
+    padding: 5px 11px;
+    border-radius: 6px;
+    font-size: .78rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    transition: all .15s;
+  }
+  .view-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ── TODAY highlight ── */
+  .today-section { border: 1px solid rgba(79,142,247,.25); border-radius: var(--radius); padding: 14px; background: rgba(79,142,247,.04); }
+
+  /* ── Checkmark SVG ── */
+  .check-svg { display: none; }
+  .task-item.done .check-svg { display: block; }
+
+  /* ── DRAG hint ── */
+  .drag-hint { font-size: .72rem; color: var(--text3); margin-top: 6px; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <h1>📅 <span>Agenda</span></h1>
+  <div class="topbar-date" id="topbarDate"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showPage('hoje')">Hoje</button>
+  <button class="tab" onclick="showPage('semana')">Semana</button>
+  <button class="tab" onclick="showPage('tarefas')">Tarefas</button>
+  <button class="tab" onclick="showPage('config')">Configurar</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ── HOJE ── -->
+  <div id="page-hoje" class="page active">
+    <div id="currentSlot"></div>
+    <div class="section-header">
+      <div class="section-title" id="todayLabel">Hoje</div>
+      <button class="btn btn-primary btn-sm" onclick="openEventModal(null, getTodayKey())">+ Evento</button>
+    </div>
+    <div id="todayEvents"></div>
+  </div>
+
+  <!-- ── SEMANA ── -->
+  <div id="page-semana" class="page">
+    <div class="section-header">
+      <div class="section-title">Agenda da Semana</div>
+      <div class="view-toggle">
+        <button class="view-btn active" onclick="setWeekView('compact')" id="vbtn-compact">Compacto</button>
+        <button class="view-btn" onclick="setWeekView('full')" id="vbtn-full">Completo</button>
+      </div>
+    </div>
+    <div id="weekEvents"></div>
+  </div>
+
+  <!-- ── TAREFAS ── -->
+  <div id="page-tarefas" class="page">
+    <div class="section-header">
+      <div class="section-title">
+        Tarefas
+        <span class="badge orange" id="taskBadge">0</span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Tarefa</button>
+    </div>
+    <div id="taskList"></div>
+  </div>
+
+  <!-- ── CONFIG ── -->
+  <div id="page-config" class="page">
+    <div class="section-header">
+      <div class="section-title">Configurar Agenda</div>
+      <button class="btn btn-primary btn-sm" onclick="openEventModal(null, 'seg')">+ Evento</button>
+    </div>
+    <p style="font-size:.8rem;color:var(--text2);margin-bottom:16px;">Edite ou adicione eventos na agenda padrão semanal.</p>
+    <div id="configDays"></div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ── MODAL EVENTO ── -->
+<div class="modal-overlay" id="eventModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="eventModalTitle">Novo Evento</h2>
+    <div class="form-group">
+      <label class="form-label">Dia da semana</label>
+      <select class="form-select" id="eventDay">
+        <option value="seg">Segunda-feira</option>
+        <option value="ter">Terça-feira</option>
+        <option value="qua">Quarta-feira</option>
+        <option value="qui">Quinta-feira</option>
+        <option value="sex">Sexta-feira</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Início</label>
+        <input type="time" class="form-input" id="eventStart" value="08:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fim</label>
+        <input type="time" class="form-input" id="eventEnd" value="09:00">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input type="text" class="form-input" id="eventTitle" placeholder="Ex: Reunião com gerente...">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeEventModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Salvar</button>
+    </div>
+    <div style="margin-top:10px;text-align:center">
+      <button class="btn btn-danger btn-sm" id="deleteEventBtn" onclick="deleteEvent()" style="display:none">Excluir evento</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL TAREFA ── -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="taskModalTitle">Nova Tarefa</h2>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input type="text" class="form-input" id="taskTitle" placeholder="Ex: Verificar relatório...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoria (opcional)</label>
+      <input type="text" class="form-input" id="taskCat" placeholder="Ex: ERP, TI, Produção...">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeTaskModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTask()">Salvar</button>
+    </div>
+    <div style="margin-top:10px;text-align:center">
+      <button class="btn btn-danger btn-sm" id="deleteTaskBtn" onclick="deleteTask()" style="display:none">Excluir tarefa</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════
+
+const DAY_KEYS = ['seg','ter','qua','qui','sex'];
+const DAY_NAMES = { seg:'Segunda-feira', ter:'Terça-feira', qua:'Quarta-feira', qui:'Quinta-feira', sex:'Sexta-feira' };
+const DAY_SHORT = { seg:'Seg', ter:'Ter', qua:'Qua', qui:'Qui', sex:'Sex' };
+
+const DEFAULT_SCHEDULE = {
+  seg: [
+    { id:'d1', start:'07:30', end:'08:00', title:'Daily Scrum – Reunião diária sincronização e planejamento' },
+    { id:'d2', start:'08:00', end:'08:30', title:'Análise de relatórios de produção' },
+    { id:'d3', start:'08:30', end:'09:30', title:'Planejamento de produção e coletas semanais' },
+    { id:'d4', start:'09:30', end:'10:30', title:'Reunião com Gerente de Descarga' },
+    { id:'d5', start:'10:30', end:'11:50', title:'Reunião com Supervisores de Produção' },
+    { id:'d6', start:'13:00', end:'14:00', title:'Tempo reservado para decisões e pendências críticas' },
+    { id:'d7', start:'14:00', end:'15:00', title:'Revisão planejamento estratégico' },
+    { id:'d8', start:'15:00', end:'17:30', title:'Atendimento a demandas internas e técnicas' },
+  ],
+  ter: [
+    { id:'d9',  start:'07:30', end:'08:00', title:'Daily Scrum – Reunião diária sincronização e planejamento' },
+    { id:'d10', start:'08:00', end:'09:00', title:'Visita nas áreas operacionais' },
+    { id:'d11', start:'09:00', end:'10:00', title:'Reunião com Gerente de Relacionamento - Captação' },
+    { id:'d12', start:'10:00', end:'11:00', title:'Reunião com Gerente de Vendas e apoio a negociações' },
+    { id:'d13', start:'11:30', end:'11:50', title:'Suporte a negociações e contatos estratégicos' },
+    { id:'d14', start:'13:00', end:'14:30', title:'Tempo reservado para decisões e pendências críticas' },
+    { id:'d15', start:'14:30', end:'17:30', title:'Projetos de melhoria e expansão' },
+  ],
+  qua: [
+    { id:'d16', start:'07:30', end:'08:00', title:'Daily Scrum – Reunião diária sincronização e planejamento' },
+    { id:'d17', start:'08:00', end:'09:00', title:'Análise de KPIs semanais' },
+    { id:'d18', start:'09:00', end:'10:30', title:'Reunião com Gerente de Descarga e Logística' },
+    { id:'d19', start:'10:30', end:'11:50', title:'Tempo para coaching e feedback com lideranças' },
+    { id:'d20', start:'13:00', end:'14:00', title:'Alinhamento com Diretoria Financeira' },
+    { id:'d21', start:'14:00', end:'17:30', title:'Projetos e acompanhamento de metas' },
+  ],
+  qui: [
+    { id:'d22', start:'07:30', end:'08:00', title:'Daily Scrum – Reunião diária sincronização e planejamento' },
+    { id:'d23', start:'08:00', end:'09:00', title:'Visita à Produção e Descarga' },
+    { id:'d24', start:'09:00', end:'11:50', title:'Apoio em projetos estratégicos / Melhoria Contínua' },
+    { id:'d25', start:'13:00', end:'15:30', title:'Tempo reservado para decisões críticas e planejamento' },
+    { id:'d26', start:'15:30', end:'17:30', title:'Atendimento a gestores e ajustes operacionais' },
+  ],
+  sex: [
+    { id:'d27', start:'07:30', end:'08:00', title:'Daily Scrum – Reunião diária sincronização e planejamento' },
+    { id:'d28', start:'08:30', end:'09:00', title:'Entrevista Sebastian' },
+    { id:'d29', start:'09:00', end:'09:30', title:'Reunião Obremos' },
+    { id:'d30', start:'09:45', end:'11:00', title:'Ecografia - Dr Izolan' },
+    { id:'d31', start:'13:00', end:'14:30', title:'Reunião Gestores Produção - Absenteísmo' },
+    { id:'d32', start:'14:30', end:'17:00', title:'Reunião Cissa' },
+  ],
+};
+
+const DEFAULT_TASKS = [
+  { id:'t1', title:'Verificar ventilador triturador de vidro', cat:'Operacional', done:false },
+  { id:'t2', title:'Aplicativo Controle de Pecuária', cat:'TI', done:false },
+  { id:'t3', title:'Implantar Sistema Biblioteca', cat:'TI', done:false },
+  { id:'t4', title:'Implantar Sistema Reserva de Salas', cat:'TI', done:false },
+  { id:'t5', title:'Cadastrar colaboradores para apontamento TECNICON', cat:'ERP', done:false },
+  { id:'t6', title:'Definir produtos por colaborador para apontamento TECNICON', cat:'ERP', done:false },
+];
+
+// ── Load / Save ──
+function loadSchedule() {
+  const s = localStorage.getItem('agenda_schedule');
+  return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_SCHEDULE));
+}
+function saveSchedule(data) {
+  localStorage.setItem('agenda_schedule', JSON.stringify(data));
+}
+function loadTasks() {
+  const s = localStorage.getItem('agenda_tasks');
+  return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_TASKS));
+}
+function saveTasks(data) {
+  localStorage.setItem('agenda_tasks', JSON.stringify(data));
+}
+
+let schedule = loadSchedule();
+let tasks = loadTasks();
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+
+function uid() { return 'e' + Date.now() + Math.random().toString(36).slice(2,6); }
+
+function getTodayKey() {
+  const d = new Date().getDay(); // 0=sun
+  return ['seg','ter','qua','qui','sex'][d-1] || null;
+}
+
+function getNow() {
+  const n = new Date();
+  return n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
+}
+
+function timeToMin(t) {
+  const [h,m] = t.split(':').map(Number);
+  return h*60+m;
+}
+
+function isNowInEvent(ev) {
+  const now = timeToMin(getNow());
+  return now >= timeToMin(ev.start) && now < timeToMin(ev.end);
+}
+
+function getCurrentEvent(dayKey) {
+  if (!schedule[dayKey]) return null;
+  return schedule[dayKey].find(isNowInEvent) || null;
+}
+
+function sortEvents(evs) {
+  return [...evs].sort((a,b) => timeToMin(a.start) - timeToMin(b.start));
+}
+
+function formatDateLong() {
+  const d = new Date();
+  const days = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  return `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+
+function renderAll() {
+  renderTopbar();
+  renderToday();
+  renderWeek();
+  renderTasks();
+  renderConfig();
+}
+
+function renderTopbar() {
+  document.getElementById('topbarDate').innerHTML =
+    getNow() + '<br>' + formatDateLong();
+}
+
+// ── TODAY ──
+function renderToday() {
+  const key = getTodayKey();
+  const label = document.getElementById('todayLabel');
+  const slot = document.getElementById('currentSlot');
+  const container = document.getElementById('todayEvents');
+
+  if (!key) {
+    label.textContent = 'Fim de semana 🌴';
+    container.innerHTML = '<div class="empty"><p>Sem agenda para hoje!</p></div>';
+    slot.innerHTML = '';
+    return;
+  }
+
+  label.innerHTML = `${DAY_NAMES[key]} <span class="badge">Hoje</span>`;
+
+  // Current slot indicator
+  const cur = getCurrentEvent(key);
+  if (cur) {
+    slot.innerHTML = `<div class="current-slot"><div class="dot"></div><strong>${cur.start}–${cur.end}</strong>&nbsp; ${cur.title}</div>`;
+  } else {
+    slot.innerHTML = '';
+  }
+
+  // Events
+  const evs = sortEvents(schedule[key] || []);
+  if (!evs.length) {
+    container.innerHTML = '<div class="empty"><p>Nenhum evento para hoje.<br>Toque em + Evento para adicionar.</p></div>';
+    return;
+  }
+
+  const now = timeToMin(getNow());
+  let html = '';
+  evs.forEach(ev => {
+    const past = timeToMin(ev.end) < now;
+    const current = isNowInEvent(ev);
+    html += `<div class="event-card ${current?'today':''}" style="${past?'opacity:.45':''}">
+      <div class="event-time"><span class="time-range">${ev.start}</span>${ev.end}</div>
+      <div class="event-body"><div class="event-title">${ev.title}</div></div>
+      <div class="event-actions">
+        <button class="btn btn-ghost btn-icon btn-sm" onclick='openEventModal(${JSON.stringify(ev)}, "${key}")'>✏️</button>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+// ── WEEK ──
+let weekView = 'compact';
+function setWeekView(v) {
+  weekView = v;
+  document.getElementById('vbtn-compact').classList.toggle('active', v==='compact');
+  document.getElementById('vbtn-full').classList.toggle('active', v==='full');
+  renderWeek();
+}
+
+function renderWeek() {
+  const container = document.getElementById('weekEvents');
+  const todayKey = getTodayKey();
+  let html = '';
+  DAY_KEYS.forEach(key => {
+    const evs = sortEvents(schedule[key] || []);
+    const isToday = key === todayKey;
+    if (weekView === 'compact' && !isToday && evs.length === 0) return;
+    html += `<div class="day-block">
+      <div class="day-label">${DAY_NAMES[key]} ${isToday ? '<span class="day-today-pill">Hoje</span>' : ''}</div>`;
+    if (weekView === 'compact' && !isToday) {
+      // show condensed
+      html += `<div style="font-size:.8rem;color:var(--text2);display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">`;
+      evs.forEach(ev => {
+        html += `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;">${ev.start} ${ev.title.split(' ').slice(0,4).join(' ')}…</span>`;
+      });
+      html += '</div>';
+    } else {
+      if (!evs.length) {
+        html += '<div style="font-size:.8rem;color:var(--text3);padding:6px 0;">Sem eventos</div>';
+      } else {
+        evs.forEach(ev => {
+          const cur = isToday && isNowInEvent(ev);
+          html += `<div class="event-card ${cur?'today':''}">
+            <div class="event-time"><span class="time-range">${ev.start}</span>${ev.end}</div>
+            <div class="event-body"><div class="event-title">${ev.title}</div></div>
+            <div class="event-actions">
+              <button class="btn btn-ghost btn-icon btn-sm" onclick='openEventModal(${JSON.stringify(ev)}, "${key}")'>✏️</button>
+            </div>
+          </div>`;
+        });
+      }
+    }
+    html += '</div>';
+  });
+  container.innerHTML = html || '<div class="empty"><p>Agenda vazia.</p></div>';
+}
+
+// ── TASKS ──
+function renderTasks() {
+  const container = document.getElementById('taskList');
+  const badge = document.getElementById('taskBadge');
+  const pending = tasks.filter(t => !t.done).length;
+  badge.textContent = pending;
+
+  if (!tasks.length) {
+    container.innerHTML = '<div class="empty"><p>Nenhuma tarefa.<br>Toque em + Tarefa para adicionar.</p></div>';
+    return;
+  }
+
+  // Group: pending first
+  const sorted = [...tasks.filter(t=>!t.done), ...tasks.filter(t=>t.done)];
+
+  // Group by category
+  const cats = {};
+  sorted.forEach(t => {
+    const c = t.cat || 'Geral';
+    if (!cats[c]) cats[c] = [];
+    cats[c].push(t);
+  });
+
+  let html = '';
+  Object.entries(cats).forEach(([cat, items]) => {
+    html += `<div style="margin-bottom:20px;">
+      <div class="day-label">${cat}</div>`;
+    items.forEach(t => {
+      html += `<div class="task-item ${t.done?'done':''}" id="task-${t.id}">
+        <button class="task-check" onclick="toggleTask('${t.id}')">
+          ${t.done ? '<svg class="check-svg" width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+        </button>
+        <div class="task-body"><div class="task-title">${t.title}</div></div>
+        <div class="task-actions">
+          <button class="btn btn-ghost btn-icon btn-sm" onclick='openTaskModal(${JSON.stringify(t)})'>✏️</button>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+// ── CONFIG ──
+function renderConfig() {
+  const container = document.getElementById('configDays');
+  let html = '';
+  DAY_KEYS.forEach(key => {
+    const evs = sortEvents(schedule[key] || []);
+    html += `<div class="day-block">
+      <div class="day-label" style="justify-content:space-between">
+        ${DAY_NAMES[key]}
+        <button class="btn btn-ghost btn-sm" onclick="openEventModal(null,'${key}')">+ Evento</button>
+      </div>`;
+    evs.forEach(ev => {
+      html += `<div class="event-card">
+        <div class="event-time"><span class="time-range">${ev.start}</span>${ev.end}</div>
+        <div class="event-body"><div class="event-title">${ev.title}</div></div>
+        <div class="event-actions">
+          <button class="btn btn-ghost btn-icon btn-sm" onclick='openEventModal(${JSON.stringify(ev)},"${key}")'>✏️</button>
+        </div>
+      </div>`;
+    });
+    if (!evs.length) html += '<div style="font-size:.8rem;color:var(--text3);padding:6px 0;">Sem eventos</div>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+//  PAGES
+// ══════════════════════════════════════════════
+
+let currentPage = 'hoje';
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => { if (t.textContent.toLowerCase().includes(id) || (id==='hoje'&&t.textContent==='Hoje') || (id==='semana'&&t.textContent==='Semana') || (id==='tarefas'&&t.textContent==='Tarefas') || (id==='config'&&t.textContent==='Configurar')) t.classList.add('active'); });
+  currentPage = id;
+  if (id==='hoje') renderToday();
+  if (id==='semana') renderWeek();
+  if (id==='tarefas') renderTasks();
+  if (id==='config') renderConfig();
+}
+
+// ══════════════════════════════════════════════
+//  EVENT MODAL
+// ══════════════════════════════════════════════
+
+let editingEvent = null;
+let editingEventDay = null;
+
+function openEventModal(ev, dayKey) {
+  editingEvent = ev;
+  editingEventDay = dayKey || 'seg';
+  document.getElementById('eventModalTitle').textContent = ev ? 'Editar Evento' : 'Novo Evento';
+  document.getElementById('eventDay').value = editingEventDay;
+  document.getElementById('eventStart').value = ev ? ev.start : '08:00';
+  document.getElementById('eventEnd').value = ev ? ev.end : '09:00';
+  document.getElementById('eventTitle').value = ev ? ev.title : '';
+  document.getElementById('deleteEventBtn').style.display = ev ? 'inline-flex' : 'none';
+  document.getElementById('eventModal').classList.add('open');
+}
+
+function closeEventModal() {
+  document.getElementById('eventModal').classList.remove('open');
+}
+
+function saveEvent() {
+  const day = document.getElementById('eventDay').value;
+  const start = document.getElementById('eventStart').value;
+  const end = document.getElementById('eventEnd').value;
+  const title = document.getElementById('eventTitle').value.trim();
+  if (!title) { alert('Preencha a descrição.'); return; }
+
+  if (!schedule[day]) schedule[day] = [];
+
+  if (editingEvent) {
+    // remove from old day if day changed
+    if (editingEventDay !== day) {
+      schedule[editingEventDay] = schedule[editingEventDay].filter(e => e.id !== editingEvent.id);
+    }
+    const idx = schedule[day].findIndex(e => e.id === editingEvent.id);
+    const updated = { id: editingEvent.id, start, end, title };
+    if (idx >= 0) schedule[day][idx] = updated;
+    else schedule[day].push(updated);
+  } else {
+    schedule[day].push({ id: uid(), start, end, title });
+  }
+
+  saveSchedule(schedule);
+  closeEventModal();
+  renderAll();
+}
+
+function deleteEvent() {
+  if (!editingEvent) return;
+  if (!confirm('Excluir este evento?')) return;
+  schedule[editingEventDay] = (schedule[editingEventDay]||[]).filter(e => e.id !== editingEvent.id);
+  saveSchedule(schedule);
+  closeEventModal();
+  renderAll();
+}
+
+// ══════════════════════════════════════════════
+//  TASK MODAL
+// ══════════════════════════════════════════════
+
+let editingTask = null;
+
+function openTaskModal(task) {
+  editingTask = task || null;
+  document.getElementById('taskModalTitle').textContent = task ? 'Editar Tarefa' : 'Nova Tarefa';
+  document.getElementById('taskTitle').value = task ? task.title : '';
+  document.getElementById('taskCat').value = task ? (task.cat||'') : '';
+  document.getElementById('deleteTaskBtn').style.display = task ? 'inline-flex' : 'none';
+  document.getElementById('taskModal').classList.add('open');
+}
+
+function closeTaskModal() {
+  document.getElementById('taskModal').classList.remove('open');
+}
+
+function saveTask() {
+  const title = document.getElementById('taskTitle').value.trim();
+  const cat = document.getElementById('taskCat').value.trim() || 'Geral';
+  if (!title) { alert('Preencha a descrição.'); return; }
+
+  if (editingTask) {
+    const idx = tasks.findIndex(t => t.id === editingTask.id);
+    if (idx >= 0) tasks[idx] = { ...tasks[idx], title, cat };
+  } else {
+    tasks.unshift({ id: uid(), title, cat, done: false });
+  }
+
+  saveTasks(tasks);
+  closeTaskModal();
+  renderTasks();
+}
+
+function deleteTask() {
+  if (!editingTask) return;
+  if (!confirm('Excluir esta tarefa?')) return;
+  tasks = tasks.filter(t => t.id !== editingTask.id);
+  saveTasks(tasks);
+  closeTaskModal();
+  renderTasks();
+}
+
+function toggleTask(id) {
+  const t = tasks.find(t => t.id === id);
+  if (t) { t.done = !t.done; saveTasks(tasks); renderTasks(); }
+}
+
+// ══════════════════════════════════════════════
+//  CLOSE MODALS ON OVERLAY CLICK
+// ══════════════════════════════════════════════
+document.getElementById('eventModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeEventModal(); });
+document.getElementById('taskModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeTaskModal(); });
+
+// ══════════════════════════════════════════════
+//  CLOCK TICK
+// ══════════════════════════════════════════════
+setInterval(() => {
+  renderTopbar();
+  if (currentPage === 'hoje') renderToday();
+}, 30000);
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+renderAll();
+</script>
+</body>
+</html>
