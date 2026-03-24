@@ -673,9 +673,9 @@ function renderToday() {
   evs.forEach(ev => {
     const past = timeToMin(ev.end) < now;
     const current = isNowInEvent(ev);
-    html += `<div class="event-card ${current?'today':''}" style="${past?'opacity:.45':''}">
-      <div class="event-time"><span class="time-range">${ev.start}</span>${ev.end}</div>
-      <div class="event-body"><div class="event-title">${ev.title}</div></div>
+    html += `<div class="event-card ${current?'today':''}" style="${past?'opacity:.75':''}">
+      <div class="event-time"><span class="time-range" style="color:#fff">${ev.start}</span><span style="color:#fff">${ev.end}</span></div>
+      <div class="event-body"><div class="event-title" style="color:#fff">${ev.title}</div></div>
       <div class="event-actions">
         <button class="btn btn-ghost btn-icon btn-sm" onclick='openEventModal(${JSON.stringify(ev)}, "${key}")'>✏️</button>
       </div>
