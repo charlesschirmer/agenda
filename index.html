@@ -437,22 +437,24 @@ async function pullFromGist(silent=false) {
   if (!gist.ok()) { if(!silent) showPage('sync'); return; }
   setSyncUI('busy','Buscando…');
   try {
-    const r = await fetch(`https://api.github.com/gists/${gist.id()}`, {
+    const r = await fetch(`https://api.github.com/gists/${gist.id()}?nocache=${Date.now()}`, {
       headers: { 'Authorization': `token ${gist.token()}` }
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data   = await r.json();
     const raw    = data.files?.[GIST_FILE]?.content;
-    if (!raw) { setSyncUI('ok','Sincronizado ✓'); return; }
-    const remote = JSON.parse(raw);
-    if ((remote.ts||0) > gist.lastTs()) {
+    if (!raw) { setSyncUI('ok','Sincronizado ✓'); if(!silent) log('ℹ Gist vazio, nada para carregar.'); return; }
+    const remote   = JSON.parse(raw);
+    const remoteTs = remote.ts || 0;
+    const localTs  = gist.lastTs();
+    if (!silent || remoteTs > localTs) {
       schedule = remote.schedule || schedule;
       tasks    = remote.tasks    || tasks;
       ls.set('agenda_schedule', schedule);
-      ls.set('agenda_tasks', tasks);
-      ls.setRaw('gist_last_ts', remote.ts);
+      ls.set('agenda_tasks',    tasks);
+      ls.setRaw('gist_last_ts', String(remoteTs || Date.now()));
       renderAll();
-      log('⬇ Dados mais recentes carregados do Gist.');
+      log('⬇ Agenda + Tarefas atualizadas do Gist.');
     } else {
       if (!silent) log('ℹ Dados locais já estão atualizados.');
     }
