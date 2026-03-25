@@ -675,14 +675,18 @@ function applyTemplate(dow) {
   const dateStr = nextOccurrence(dow);
   const dayName = DAY_NAMES[dow];
   const formatted = dateLong(dateStr);
-  if(!confirm(`Aplicar o template de ${dayName} na agenda de ${formatted}?\n\nOs eventos atuais dessa data serão substituídos.`)) return;
-  const tplEvs = clone(template[dow] || []);
-  // Gera novos IDs para não conflitar
+  const existing = agenda[dateStr]||[];
+  const msg = existing.length > 0
+    ? `Adicionar o template de ${dayName} na agenda de ${formatted}?\n\nOs ${existing.length} evento(s) já existentes serão mantidos. O template será adicionado junto.`
+    : `Aplicar o template de ${dayName} na agenda de ${formatted}?`;
+  if(!confirm(msg)) return;
+  const tplEvs = clone(template[dow]||[]);
   tplEvs.forEach(ev => { ev.id = uid(); });
-  agenda[dateStr] = tplEvs;
+  agenda[dateStr] = [...existing, ...tplEvs];
   saveAgenda();
   renderAll();
-  addLog(`📋 Template de ${dayName} aplicado em ${formatted}.`);
+  if(currentPage==='mes'){ calSelectedDay=dateStr; renderCal(); }
+  addLog(`📋 Template de ${dayName} mesclado em ${formatted}.`);
 }
 
 // ═══════════════════════════════════════════
