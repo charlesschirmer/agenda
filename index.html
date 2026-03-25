@@ -130,6 +130,30 @@
   .mono-sm{font-family:'DM Mono',monospace;font-size:.74rem;color:#555;word-break:break-all;margin-top:3px;}
   .sync-log{font-size:.74rem;color:#555;font-family:'DM Mono',monospace;line-height:1.7;max-height:130px;overflow-y:auto;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 
+  /* CALENDAR */
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .cal-nav-title{font-size:1rem;font-weight:600;color:#fff;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .cal-dow{text-align:center;font-size:.68rem;font-weight:600;color:#666;padding:4px 0;text-transform:uppercase;}
+  .cal-cell{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .15s;gap:2px;}
+  .cal-cell:hover{background:var(--surface2);}
+  .cal-cell.today{background:var(--accent);color:#fff;}
+  .cal-cell.today .cal-num{color:#fff;font-weight:700;}
+  .cal-cell.has-events .cal-dot{display:block;}
+  .cal-cell.other-month .cal-num{color:#444;}
+  .cal-cell.selected{background:var(--surface2);border:1px solid var(--accent);}
+  .cal-num{font-size:.82rem;font-weight:500;color:#fff;line-height:1;}
+  .cal-dot{display:none;width:4px;height:4px;border-radius:50%;background:var(--orange);}
+  .cal-cell.today .cal-dot{background:#fff;}
+
+  /* DAY DETAIL (month view) */
+  .day-detail{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-top:14px;}
+  .day-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .day-detail-title{font-size:.88rem;font-weight:600;color:#fff;}
+
+  /* WEEK SECTION DIVIDER */
+  .week-divider{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
   ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
   .page{display:none;} .page.active{display:block;}
 </style>
@@ -150,6 +174,7 @@
 <div class="tabs">
   <button class="tab active" onclick="showPage('hoje')">Hoje</button>
   <button class="tab" onclick="showPage('semana')">Semana</button>
+  <button class="tab" onclick="showPage('mes')">Mês</button>
   <button class="tab" onclick="showPage('tarefas')">Tarefas</button>
   <button class="tab" onclick="showPage('template')">Template</button>
   <button class="tab" onclick="showPage('sync')">⇄ Sync</button>
@@ -173,6 +198,17 @@
       <div class="section-title" id="semanaLabel">Semana atual</div>
     </div>
     <div id="weekEvents"></div>
+  </div>
+
+  <!-- MÊS -->
+  <div id="page-mes" class="page">
+    <div class="cal-nav">
+      <button class="btn btn-ghost btn-sm" onclick="calPrev()">‹ Anterior</button>
+      <div class="cal-nav-title" id="calTitle"></div>
+      <button class="btn btn-ghost btn-sm" onclick="calNext()">Próximo ›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div id="calDayDetail"></div>
   </div>
 
   <!-- TAREFAS -->
@@ -652,7 +688,14 @@ function applyTemplate(dow) {
 // ═══════════════════════════════════════════
 //  RENDER
 // ═══════════════════════════════════════════
-function renderAll(){renderTopbar();renderToday();renderWeek();renderTasks();renderTemplate();}
+function renderAll(){
+  renderTopbar();
+  renderToday();
+  if(currentPage==='semana')  renderWeek();
+  if(currentPage==='mes')     renderCal();
+  if(currentPage==='tarefas') renderTasks();
+  if(currentPage==='template')renderTemplate();
+}
 
 function renderTopbar(){
   const n=new Date();
@@ -690,35 +733,132 @@ function renderToday(){
   box.innerHTML=evs.map(ev=>eCard(ev,ds)).join('');
 }
 
+// Retorna datas de N semanas a partir da semana atual (seg → sex)
+function getWeeksDates(numWeeks) {
+  const today = new Date();
+  const dow   = today.getDay();
+  const diff  = dow===0 ? -6 : 1-dow;
+  const mon   = new Date(today); mon.setDate(today.getDate()+diff);
+  const weeks = [];
+  for(let w=0;w<numWeeks;w++){
+    const days=[];
+    for(let i=0;i<5;i++){
+      const d=new Date(mon); d.setDate(mon.getDate()+w*7+i);
+      days.push({str:fmtDate(d),dow:i+1,d});
+    }
+    weeks.push(days);
+  }
+  return weeks;
+}
+
 function renderWeek(){
   const box=document.getElementById('weekEvents');
-  const dates=currentWeekDates();
+  const weeks=getWeeksDates(3);
   const ts=todayStr();
-  // Label da semana
-  const mon=dates[0]; const fri=dates[4];
-  document.getElementById('semanaLabel').textContent=
-    `Semana ${dateShort(mon.str)} – ${dateShort(fri.str)}`;
+  const weekLabels=['Semana atual','Próxima semana','Daqui a 2 semanas'];
   let html='';
-  dates.forEach(({str,dow,d})=>{
-    const evs=sortedEvs(agenda[str]||[]);
-    const isToday=str===ts;
-    html+=`<div class="day-block">
-      <div class="day-label">
-        ${DAY_NAMES[dow]} <span class="day-sub">${dateShort(str)}</span>
-        ${isToday?'<span class="day-today-pill">Hoje</span>':''}
-        <button class="btn btn-ghost btn-icon btn-sm" style="margin-left:auto" onclick='openEventModal(null,"${str}")' title="Adicionar evento">＋</button>
-      </div>`;
-    if(!evs.length){
-      html+=`<div style="font-size:.78rem;color:#555;padding:4px 0;display:flex;align-items:center;gap:10px;">
-        Sem eventos
-        <button class="btn btn-success btn-sm" onclick="applyTemplate(${dow})">📋 Aplicar template</button>
-      </div>`;
-    } else {
-      html+=evs.map(ev=>eCard(ev,str)).join('');
-    }
-    html+='</div>';
+  weeks.forEach((days,wi)=>{
+    const mon=days[0]; const fri=days[4];
+    html+=`<div class="week-divider">${weekLabels[wi]} &nbsp;·&nbsp; ${dateShort(mon.str)} – ${dateShort(fri.str)}</div>`;
+    days.forEach(({str,dow,d})=>{
+      const evs=sortedEvs(agenda[str]||[]);
+      const isToday=str===ts;
+      html+=`<div class="day-block">
+        <div class="day-label">
+          ${DAY_NAMES[dow]} <span class="day-sub">${dateShort(str)}</span>
+          ${isToday?'<span class="day-today-pill">Hoje</span>':''}
+          <button class="btn btn-ghost btn-icon btn-sm" style="margin-left:auto" onclick='openEventModal(null,"${str}")' title="Adicionar evento">＋</button>
+        </div>`;
+      if(!evs.length){
+        html+=`<div style="font-size:.78rem;color:#555;padding:4px 0;display:flex;align-items:center;gap:10px;">
+          Sem eventos
+          <button class="btn btn-success btn-sm" onclick="applyTemplate(${dow})">📋 Aplicar template</button>
+        </div>`;
+      } else {
+        html+=evs.map(ev=>eCard(ev,str)).join('');
+      }
+      html+='</div>';
+    });
   });
   box.innerHTML=html;
+}
+
+// ── CALENDÁRIO ──
+let calYear=new Date().getFullYear();
+let calMonth=new Date().getMonth(); // 0-based
+let calSelectedDay=null;
+
+const MONTHS_PT=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DOWS_PT=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCal(); }
+function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCal(); }
+
+function renderCal(){
+  document.getElementById('calTitle').textContent=MONTHS_PT[calMonth]+' '+calYear;
+  const ts=todayStr();
+  const firstDay=new Date(calYear,calMonth,1);
+  const lastDay=new Date(calYear,calMonth+1,0);
+  const startDow=firstDay.getDay(); // 0=dom
+  let html='';
+  // Cabeçalho dias
+  DOWS_PT.forEach(d=>{html+=`<div class="cal-dow">${d}</div>`;});
+  // Células antes do mês
+  for(let i=0;i<startDow;i++){
+    const d=new Date(calYear,calMonth,1-startDow+i);
+    html+=`<div class="cal-cell other-month"><span class="cal-num">${d.getDate()}</span></div>`;
+  }
+  // Dias do mês
+  for(let day=1;day<=lastDay.getDate();day++){
+    const str=calYear+'-'+(calMonth+1).toString().padStart(2,'0')+'-'+day.toString().padStart(2,'0');
+    const isToday=str===ts;
+    const hasEvs=(agenda[str]||[]).length>0;
+    const isSel=str===calSelectedDay;
+    html+=`<div class="cal-cell ${isToday?'today':''} ${hasEvs?'has-events':''} ${isSel&&!isToday?'selected':''}" onclick="calSelectDay('${str}')">
+      <span class="cal-num">${day}</span>
+      <div class="cal-dot"></div>
+    </div>`;
+  }
+  // Células depois do mês
+  const endDow=lastDay.getDay();
+  for(let i=1;i<7-endDow;i++){
+    const d=new Date(calYear,calMonth+1,i);
+    html+=`<div class="cal-cell other-month"><span class="cal-num">${d.getDate()}</span></div>`;
+  }
+  document.getElementById('calGrid').innerHTML=html;
+  if(calSelectedDay) renderCalDay(calSelectedDay);
+  else document.getElementById('calDayDetail').innerHTML='';
+}
+
+function calSelectDay(str){
+  calSelectedDay=str;
+  renderCal();
+}
+
+function renderCalDay(str){
+  const evs=sortedEvs(agenda[str]||[]);
+  const label=dateLong(str);
+  let html=`<div class="day-detail">
+    <div class="day-detail-header">
+      <div class="day-detail-title">${label}</div>
+      <button class="btn btn-primary btn-sm" onclick='openEventModal(null,"${str}")'>+ Evento</button>
+    </div>`;
+  if(!evs.length){
+    const d=parseDate(str);
+    const dow=d.getDay()===0?7:d.getDay();
+    if(dow>=1&&dow<=5){
+      html+=`<div style="font-size:.8rem;color:#555;margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+        Sem eventos
+        <button class="btn btn-success btn-sm" onclick="applyTemplate(${dow});calSelectDay('${str}')">📋 Aplicar template</button>
+      </div>`;
+    } else {
+      html+='<div style="font-size:.8rem;color:#555">Sem eventos</div>';
+    }
+  } else {
+    html+=evs.map(ev=>eCard(ev,str)).join('');
+  }
+  html+='</div>';
+  document.getElementById('calDayDetail').innerHTML=html;
 }
 
 function renderTasks(){
@@ -777,7 +917,7 @@ function renderTemplate(){
 //  PAGES
 // ═══════════════════════════════════════════
 let currentPage='hoje';
-const PAGE_IDX={hoje:0,semana:1,tarefas:2,template:3,sync:4};
+const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,template:4,sync:5};
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===PAGE_IDX[id]));
@@ -785,6 +925,7 @@ function showPage(id){
   currentPage=id;
   if(id==='hoje')    renderToday();
   if(id==='semana')  renderWeek();
+  if(id==='mes')     renderCal();
   if(id==='tarefas') renderTasks();
   if(id==='template')renderTemplate();
   if(id==='sync')    renderSyncPage();
@@ -805,6 +946,11 @@ function openEventModal(ev, dateStr){
   document.getElementById('eventModal').classList.add('open');
 }
 function closeEventModal(){document.getElementById('eventModal').classList.remove('open');}
+function afterSaveEvent(dateStr){
+  saveAgenda(); closeEventModal(); renderAll();
+  if(currentPage==='mes'){ calSelectedDay=dateStr; renderCal(); }
+  else if(currentPage==='semana') renderWeek();
+}
 function saveEvent(){
   const dateStr=document.getElementById('eventDate').value;
   const start=document.getElementById('eventStart').value;
@@ -813,7 +959,6 @@ function saveEvent(){
   if(!title){alert('Preencha a descrição.');return;}
   if(!agenda[dateStr])agenda[dateStr]=[];
   if(editingEvent){
-    // Se mudou de data, remove da data antiga
     if(editingEventDate!==dateStr){
       agenda[editingEventDate]=(agenda[editingEventDate]||[]).filter(e=>e.id!==editingEvent.id);
     }
@@ -823,12 +968,12 @@ function saveEvent(){
   } else {
     agenda[dateStr].push({id:uid(),start,end,title});
   }
-  saveAgenda();closeEventModal();renderAll();
+  afterSaveEvent(dateStr);
 }
 function deleteEvent(){
   if(!editingEvent||!confirm('Excluir este evento?'))return;
   agenda[editingEventDate]=(agenda[editingEventDate]||[]).filter(e=>e.id!==editingEvent.id);
-  saveAgenda();closeEventModal();renderAll();
+  afterSaveEvent(editingEventDate);
 }
 
 // ═══════════════════════════════════════════
