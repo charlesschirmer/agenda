@@ -780,6 +780,7 @@ function renderWeek(){
         </div>`;
       } else {
         html+=evs.map(ev=>eCard(ev,str)).join('');
+        html+=`<div style="margin-top:6px"><button class="btn btn-success btn-sm" onclick="applyTemplate(${dow})">📋 Aplicar template</button></div>`;
       }
       html+='</div>';
     });
@@ -860,6 +861,11 @@ function renderCalDay(str){
     }
   } else {
     html+=evs.map(ev=>eCard(ev,str)).join('');
+    const d=parseDate(str);
+    const dow=d.getDay()===0?7:d.getDay();
+    if(dow>=1&&dow<=5){
+      html+=`<div style="margin-top:8px"><button class="btn btn-success btn-sm" onclick="applyTemplate(${dow});calSelectDay('${str}')">📋 Aplicar template</button></div>`;
+    }
   }
   html+='</div>';
   document.getElementById('calDayDetail').innerHTML=html;
