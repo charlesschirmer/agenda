@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Agenda</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e334d;
+    --accent: #4f8ef7; --green: #3ecf8e; --orange: #f7934f; --red: #f76f6f;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: #fff; min-height: 100vh; overflow-x: hidden; }
+
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; gap: 10px; }
+  .topbar h1 { font-size: 1.05rem; font-weight: 600; color: #fff; white-space: nowrap; }
+  .topbar h1 span { color: var(--accent); }
+  .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .topbar-date { font-family: 'DM Mono', monospace; font-size: .7rem; color: #fff; text-align: right; line-height: 1.4; }
+
+  .sync-badge { font-size: .68rem; font-weight: 600; border-radius: 20px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; cursor: pointer; user-select: none; }
+  .sync-badge.ok   { background: rgba(62,207,142,.15);  color: var(--green);  border: 1px solid rgba(62,207,142,.3); }
+  .sync-badge.err  { background: rgba(247,111,111,.15); color: var(--red);    border: 1px solid rgba(247,111,111,.3); }
+  .sync-badge.busy { background: rgba(79,142,247,.15);  color: var(--accent); border: 1px solid rgba(79,142,247,.3); }
+  .sync-badge.off  { background: rgba(255,255,255,.08); color: #888;          border: 1px solid var(--border); }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+  .sync-dot.blinking { animation: blink .7s infinite; }
+
+  .tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 11px 18px; font-size: .82rem; font-weight: 500; color: rgba(255,255,255,.5); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all .2s; background: none; border-top: none; border-left: none; border-right: none; font-family: 'DM Sans', sans-serif; }
+  .tab:hover { color: rgba(255,255,255,.85); }
+  .tab.active { color: #fff; border-bottom-color: var(--accent); }
+
+  .main { padding: 16px 14px 100px; max-width: 700px; margin: 0 auto; }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+  .section-title { font-size: .95rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+  .badge { font-size: .68rem; font-weight: 600; background: var(--accent); color: #fff; border-radius: 20px; padding: 2px 8px; }
+  .badge.orange { background: var(--orange); }
+
+  .btn { padding: 8px 14px; border-radius: 8px; font-size: .8rem; font-weight: 500; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6fa0ff; }
+  .btn-ghost { background: transparent; color: #fff; border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: #fff; }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid transparent; }
+  .btn-danger:hover { background: rgba(247,111,111,.1); }
+  .btn-sm { padding: 5px 10px; font-size: .75rem; }
+  .btn-icon { padding: 6px; border-radius: 6px; line-height: 1; }
+
+  .event-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 12px; align-items: flex-start; transition: border-color .2s; }
+  .event-card:hover { border-color: #fff3; }
+  .event-card.current { border-left: 3px solid var(--accent); }
+  .event-time { font-family: 'DM Mono', monospace; font-size: .72rem; color: #fff; white-space: nowrap; min-width: 88px; padding-top: 2px; }
+  .event-time .tr { display: block; font-size: .76rem; color: #fff; font-weight: 600; }
+  .event-body { flex: 1; min-width: 0; }
+  .event-title { font-size: .88rem; font-weight: 500; color: #fff; line-height: 1.35; }
+  .event-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+  .event-card:hover .event-actions { opacity: 1; }
+
+  .day-block { margin-bottom: 26px; }
+  .day-label { font-size: .76rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .day-today-pill { font-size: .65rem; background: var(--accent); color: #fff; border-radius: 20px; padding: 2px 8px; text-transform: none; letter-spacing: 0; font-weight: 600; }
+
+  .empty { text-align: center; padding: 36px 20px; color: #666; font-size: .85rem; }
+
+  .task-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 11px; transition: border-color .2s; }
+  .task-item:hover { border-color: #fff3; }
+  .task-item.done { opacity: .5; }
+  .task-check { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 5px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all .15s; background: none; }
+  .task-item.done .task-check { background: var(--green); border-color: var(--green); }
+  .task-title { font-size: .88rem; color: #fff; line-height: 1.35; flex: 1; }
+  .task-item.done .task-title { text-decoration: line-through; color: #666; }
+  .task-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+  .task-item:hover .task-actions { opacity: 1; }
+
+  .current-slot { background: linear-gradient(135deg,rgba(79,142,247,.12),rgba(124,106,247,.08)); border: 1px solid rgba(79,142,247,.3); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; font-size: .84rem; color: #fff; display: flex; align-items: center; gap: 10px; }
+  .current-slot .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; flex-shrink: 0; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+
+  .view-toggle { display: flex; gap: 4px; background: var(--surface2); border-radius: 8px; padding: 3px; }
+  .view-btn { padding: 5px 11px; border-radius: 6px; font-size: .78rem; font-weight: 500; cursor: pointer; border: none; background: none; color: #888; font-family: 'DM Sans', sans-serif; transition: all .15s; }
+  .view-btn.active { background: var(--surface); color: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px 18px 0 0; width: 100%; max-width: 700px; padding: 22px 18px 36px; transform: translateY(100%); transition: transform .25s cubic-bezier(.4,0,.2,1); max-height: 92vh; overflow-y: auto; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 0 auto 18px; }
+  .modal h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #fff; }
+
+  .form-group { margin-bottom: 13px; }
+  .form-label { display: block; font-size: .78rem; color: #888; margin-bottom: 5px; font-weight: 500; }
+  .form-input, .form-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: .88rem; color: #fff; outline: none; transition: border-color .15s; }
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .form-select option { background: var(--surface2); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .form-actions .btn { flex: 1; justify-content: center; }
+
+  /* SYNC PAGE */
+  .sync-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+  .sync-card h3 { font-size: .9rem; font-weight: 600; color: #fff; margin-bottom: 10px; }
+  .sync-card p { font-size: .82rem; color: #999; line-height: 1.6; margin-bottom: 12px; }
+  .sync-card ol { font-size: .82rem; color: #999; line-height: 1.8; padding-left: 18px; margin-bottom: 14px; }
+  .sync-card a { color: var(--accent); text-decoration: none; }
+  .sync-card code { background: var(--surface2); border-radius: 4px; padding: 1px 6px; font-family: 'DM Mono', monospace; font-size: .78rem; color: #fff; }
+  .connected-box { background: rgba(62,207,142,.08); border: 1px solid rgba(62,207,142,.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: .82rem; color: var(--green); }
+  .mono-sm { font-family: 'DM Mono', monospace; font-size: .74rem; color: #666; word-break: break-all; margin-top: 3px; }
+  .sync-log { font-size: .74rem; color: #666; font-family: 'DM Mono', monospace; line-height: 1.7; max-height: 130px; overflow-y: auto; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+  .alert-box { background: rgba(247,147,79,.08); border: 1px solid rgba(247,147,79,.3); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: .82rem; color: var(--orange); line-height: 1.5; }
+
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .page { display: none; } .page.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📅 <span>Agenda</span></h1>
+  <div class="topbar-right">
+    <div id="syncBadge" class="sync-badge off" onclick="manualSync()" title="Clique para sincronizar">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncText">Sem sync</span>
+    </div>
+    <div class="topbar-date" id="topbarDate"></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showPage('hoje')">Hoje</button>
+  <button class="tab" onclick="showPage('semana')">Semana</button>
+  <button class="tab" onclick="showPage('tarefas')">Tarefas</button>
+  <button class="tab" onclick="showPage('config')">Configurar</button>
+  <button class="tab" onclick="showPage('sync')">⇄ Sync</button>
+</div>
+
+<div class="main">
+
+  <div id="page-hoje" class="page active">
+    <div id="currentSlot"></div>
+    <div class="section-header">
+      <div class="section-title" id="todayLabel">Hoje</div>
+      <button class="btn btn-primary btn-sm" onclick="openEventModal(null,getTodayKey())">+ Evento</button>
+    </div>
+    <div id="todayEvents"></div>
+  </div>
+
+  <div id="page-semana" class="page">
+    <div class="section-header">
+      <div class="section-title">Agenda da Semana</div>
+      <div class="view-toggle">
+        <button class="view-btn active" onclick="setWeekView('compact')" id="vbtn-compact">Compacto</button>
+        <button class="view-btn" onclick="setWeekView('full')" id="vbtn-full">Completo</button>
+      </div>
+    </div>
+    <div id="weekEvents"></div>
+  </div>
+
+  <div id="page-tarefas" class="page">
+    <div class="section-header">
+      <div class="section-title">Tarefas <span class="badge orange" id="taskBadge">0</span></div>
+      <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Tarefa</button>
+    </div>
+    <div id="taskList"></div>
+  </div>
+
+  <div id="page-config" class="page">
+    <div class="section-header"><div class="section-title">Configurar Agenda</div></div>
+    <p style="font-size:.8rem;color:#888;margin-bottom:16px;">Edite ou adicione eventos na agenda padrão semanal.</p>
+    <div style="margin-bottom:16px">
+      <button class="btn btn-danger btn-sm" onclick="resetToDefault()">↺ Restaurar agenda padrão</button>
+    </div>
+    <div id="configDays"></div>
+  </div>
+
+  <!-- SYNC PAGE -->
+  <div id="page-sync" class="page">
+    <div class="section-header"><div class="section-title">⇄ Sincronização</div></div>
+
+    <!-- CONECTADO -->
+    <div id="blockConectado" style="display:none">
+      <div class="connected-box">✅ Conectado ao GitHub Gist</div>
+      <div class="sync-card">
+        <h3>Status</h3>
+        <div style="margin-bottom:8px"><span style="font-size:.78rem;color:#888">Token</span><div class="mono-sm" id="showToken"></div></div>
+        <div style="margin-bottom:16px"><span style="font-size:.78rem;color:#888">Gist ID</span><div class="mono-sm" id="showGistId"></div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="syncPull()">⬇ Receber do Gist</button>
+          <button class="btn btn-ghost btn-sm"   onclick="syncPush()">⬆ Enviar ao Gist</button>
+          <button class="btn btn-danger btn-sm"  onclick="desconectar()">Desconectar</button>
+        </div>
+        <div class="sync-log" id="syncLog"></div>
+      </div>
+    </div>
+
+    <!-- SETUP -->
+    <div id="blockSetup">
+      <div class="sync-card">
+        <h3>Como criar o token</h3>
+        <ol>
+          <li>Acesse <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a></li>
+          <li>Em <strong style="color:#fff">Note</strong> escreva: <code>agenda-sync</code></li>
+          <li>Em <strong style="color:#fff">Expiration</strong> escolha <code>No expiration</code></li>
+          <li>Marque <strong style="color:#fff">somente</strong> a permissão <code>gist</code></li>
+          <li>Clique <strong style="color:#fff">Generate token</strong> e copie o token gerado</li>
+        </ol>
+      </div>
+      <div class="sync-card">
+        <h3>Conectar</h3>
+        <div class="form-group">
+          <label class="form-label">Personal Access Token</label>
+          <input type="password" class="form-input" id="inToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:.8rem;color:#888;display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="chkExistente" onchange="toggleExistente()">
+            Já tenho um Gist ID (segundo dispositivo)
+          </label>
+        </div>
+        <div id="grupoGistId" style="display:none" class="form-group">
+          <label class="form-label">Gist ID existente</label>
+          <input type="text" class="form-input" id="inGistId" placeholder="a1b2c3d4e5f6...">
+        </div>
+        <button class="btn btn-primary" id="btnConectar" onclick="conectar()">Conectar</button>
+        <div id="statusConexao" style="margin-top:12px;font-size:.8rem;line-height:1.5"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL EVENTO -->
+<div class="modal-overlay" id="eventModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="eventModalTitle">Novo Evento</h2>
+    <div class="form-group">
+      <label class="form-label">Dia da semana</label>
+      <select class="form-select" id="eventDay">
+        <option value="seg">Segunda-feira</option><option value="ter">Terça-feira</option>
+        <option value="qua">Quarta-feira</option><option value="qui">Quinta-feira</option>
+        <option value="sex">Sexta-feira</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Início</label><input type="time" class="form-input" id="eventStart" value="08:00"></div>
+      <div class="form-group"><label class="form-label">Fim</label><input type="time" class="form-input" id="eventEnd" value="09:00"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input type="text" class="form-input" id="eventTitle" placeholder="Ex: Reunião com gerente...">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeEventModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Salvar</button>
+    </div>
+    <div style="margin-top:10px;text-align:center">
+      <button class="btn btn-danger btn-sm" id="deleteEventBtn" onclick="deleteEvent()" style="display:none">Excluir evento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAREFA -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="taskModalTitle">Nova Tarefa</h2>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input type="text" class="form-input" id="taskTitle" placeholder="Ex: Verificar relatório...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoria (opcional)</label>
+      <input type="text" class="form-input" id="taskCat" placeholder="Ex: ERP, TI, Produção...">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeTaskModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTask()">Salvar</button>
+    </div>
+    <div style="margin-top:10px;text-align:center">
+      <button class="btn btn-danger btn-sm" id="deleteTaskBtn" onclick="deleteTask()" style="display:none">Excluir tarefa</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DADOS PADRÃO
+// ══════════════════════════════════════════════
+const AGENDA_PADRAO = {
+  seg:[
+    {id:'s1',start:'08:00',end:'10:00',title:'Reunião de Performance da Operação – Produção | Logística | Comercial | Vendas'},
+    {id:'s2',start:'10:00',end:'11:30',title:'Análise de Indicadores Estratégicos'},
+    {id:'s3',start:'13:00',end:'15:00',title:'Bloco de Decisões Estratégicas'},
+    {id:'s4',start:'15:00',end:'17:00',title:'Projetos Estratégicos (Expansão / Melhoria / Escala)'},
+    {id:'s5',start:'17:15',end:'17:30',title:'Daily Executivo – fechamento + direcionamento do próximo dia'},
+  ],
+  ter:[
+    {id:'t1',start:'08:00',end:'09:30',title:'Reunião Comercial Estratégica – Captação + Vendas'},
+    {id:'t2',start:'09:30',end:'11:30',title:'Relacionamentos Estratégicos – Grandes clientes / parceiros'},
+    {id:'t3',start:'13:00',end:'15:00',title:'Bloco de Decisões Estratégicas'},
+    {id:'t4',start:'15:00',end:'17:00',title:'Projetos de Expansão'},
+    {id:'t5',start:'17:15',end:'17:30',title:'Daily Executivo'},
+  ],
+  qua:[
+    {id:'q1',start:'08:00',end:'09:30',title:'Revisão de KPIs e Metas'},
+    {id:'q2',start:'09:30',end:'11:00',title:'Reunião com Logística e Operações (gerencial)'},
+    {id:'q3',start:'11:00',end:'11:50',title:'1:1 com Gerentes (rodízio)'},
+    {id:'q4',start:'13:00',end:'14:00',title:'Alinhamento com Diretoria Administrativa/Financeira'},
+    {id:'q5',start:'14:00',end:'17:00',title:'Projetos Estratégicos + Acompanhamento de Metas'},
+    {id:'q6',start:'17:15',end:'17:30',title:'Daily Executivo'},
+  ],
+  qui:[
+    {id:'u1',start:'08:00',end:'10:30',title:'Projetos de Engenharia e Inovação'},
+    {id:'u2',start:'10:30',end:'11:50',title:'Auditoria Estratégica (com checklist)'},
+    {id:'u3',start:'13:00',end:'15:30',title:'Bloco de Planejamento e Decisões Críticas'},
+    {id:'u4',start:'15:30',end:'17:00',title:'Atendimento a Gerentes (somente estratégico)'},
+    {id:'u5',start:'17:15',end:'17:30',title:'Daily Executivo'},
+  ],
+  sex:[
+    {id:'x1',start:'08:00',end:'09:30',title:'Revisão da Semana (resultado vs meta)'},
+    {id:'x2',start:'09:30',end:'11:00',title:'1:1 com Lideranças'},
+    {id:'x3',start:'13:00',end:'14:30',title:'Reunião com Gestores (estratégico)'},
+    {id:'x4',start:'14:30',end:'16:30',title:'Mentoria / Desenvolvimento Pessoal'},
+    {id:'x5',start:'16:30',end:'17:00',title:'Planejamento da Próxima Semana'},
+    {id:'x6',start:'17:15',end:'17:30',title:'Daily Executivo'},
+  ],
+};
+
+const TAREFAS_PADRAO = [
+  {id:'f1',title:'Verificar ventilador triturador de vidro',cat:'Operacional',done:false},
+  {id:'f2',title:'Aplicativo Controle de Pecuária',cat:'TI',done:false},
+  {id:'f3',title:'Implantar Sistema Biblioteca',cat:'TI',done:false},
+  {id:'f4',title:'Implantar Sistema Reserva de Salas',cat:'TI',done:false},
+  {id:'f5',title:'Cadastrar colaboradores para apontamento TECNICON',cat:'ERP',done:false},
+  {id:'f6',title:'Definir produtos por colaborador para apontamento TECNICON',cat:'ERP',done:false},
+];
+
+// ══════════════════════════════════════════════
+//  STORAGE LOCAL
+// ══════════════════════════════════════════════
+function lsGet(k, def) { try { const v=localStorage.getItem(k); return v?JSON.parse(v):def; } catch(e){ return def; } }
+function lsSet(k, v)   { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+function lsRaw(k)      { return localStorage.getItem(k)||''; }
+function lsRawSet(k,v) { localStorage.setItem(k, v); }
+function lsDel(k)      { localStorage.removeItem(k); }
+function clone(o)      { return JSON.parse(JSON.stringify(o)); }
+
+// IMPORTANTE: sempre carrega do localStorage primeiro
+// Se não tiver nada salvo, usa o padrão do HTML
+let schedule = lsGet('ag_schedule', clone(AGENDA_PADRAO));
+let tasks    = lsGet('ag_tasks',    clone(TAREFAS_PADRAO));
+
+function saveSchedule(d) { schedule=d; lsSet('ag_schedule', d); }
+function saveTasks(d)    { tasks=d;    lsSet('ag_tasks',    d); }
+
+function resetToDefault() {
+  if (!confirm('Restaurar agenda padrão? Mudanças locais serão perdidas.')) return;
+  saveSchedule(clone(AGENDA_PADRAO));
+  renderAll();
+}
+
+// ══════════════════════════════════════════════
+//  GIST SYNC — REGRAS CLARAS:
+//  • Ao CONECTAR: sempre envia local → Gist (local vence)
+//  • ⬇ Receber: puxa Gist → local (sobrescreve local)
+//  • ⬆ Enviar: envia local → Gist (sobrescreve Gist)
+//  • Salvar evento/tarefa: envia silenciosamente
+//  • NUNCA puxa automaticamente ao abrir o app
+// ══════════════════════════════════════════════
+const GIST_FILE = 'agenda-data.json';
+
+const G = {
+  token:  ()  => lsRaw('g_token'),
+  id:     ()  => lsRaw('g_id'),
+  ok:     ()  => !!(lsRaw('g_token') && lsRaw('g_id')),
+};
+
+function setSyncUI(state, text) {
+  const b=document.getElementById('syncBadge');
+  const t=document.getElementById('syncText');
+  const d=document.getElementById('syncDot');
+  if(!b)return;
+  b.className='sync-badge '+state;
+  t.textContent=text;
+  d.className='sync-dot'+(state==='busy'?' blinking':'');
+}
+
+function addLog(msg) {
+  const el=document.getElementById('syncLog');
+  if(!el)return;
+  const n=new Date();
+  const ts=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0')+':'+n.getSeconds().toString().padStart(2,'0');
+  el.innerHTML=`[${ts}] ${msg}\n`+el.innerHTML;
+}
+
+// Envia dados locais → Gist
+async function syncPush(silent=false) {
+  if(!G.ok()) return;
+  if(!silent) setSyncUI('busy','Enviando…');
+  try {
+    const payload = { schedule, tasks, ts: Date.now() };
+    const r = await fetch(`https://api.github.com/gists/${G.id()}`, {
+      method:'PATCH',
+      headers:{'Authorization':'token '+G.token(),'Content-Type':'application/json'},
+      body: JSON.stringify({ files:{ [GIST_FILE]:{ content:JSON.stringify(payload) } } })
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    setSyncUI('ok','Sincronizado ✓');
+    if(!silent) addLog('✅ Dados enviados ao Gist com sucesso.');
+  } catch(e) {
+    setSyncUI('err','Erro ao enviar');
+    if(!silent) addLog('❌ Falhou: '+e.message);
+  }
+}
+
+// Puxa dados do Gist → local (sobrescreve tudo)
+async function syncPull() {
+  if(!G.ok()) { showPage('sync'); return; }
+  setSyncUI('busy','Buscando…');
+  try {
+    const r = await fetch(`https://api.github.com/gists/${G.id()}?t=${Date.now()}`, {
+      headers:{'Authorization':'token '+G.token()}
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data   = await r.json();
+    const raw    = data.files?.[GIST_FILE]?.content;
+    if(!raw) { setSyncUI('ok','Sincronizado ✓'); addLog('ℹ️ Gist sem dados ainda.'); return; }
+    const remote = JSON.parse(raw);
+    schedule = remote.schedule || schedule;
+    tasks    = remote.tasks    || tasks;
+    lsSet('ag_schedule', schedule);
+    lsSet('ag_tasks',    tasks);
+    renderAll();
+    setSyncUI('ok','Sincronizado ✓');
+    addLog('✅ Agenda e Tarefas atualizadas do Gist.');
+  } catch(e) {
+    setSyncUI('err','Erro ao buscar');
+    addLog('❌ Falhou: '+e.message);
+  }
+}
+
+function manualSync() {
+  if(!G.ok()) { showPage('sync'); return; }
+  syncPull();
+}
+
+// Save com push silencioso automático
+function saveAndPush(type) {
+  if(type==='schedule') lsSet('ag_schedule', schedule);
+  else                  lsSet('ag_tasks',    tasks);
+  if(G.ok()) syncPush(true);
+}
+
+// ── CONECTAR ──
+function toggleExistente() {
+  const chk = document.getElementById('chkExistente').checked;
+  document.getElementById('grupoGistId').style.display = chk ? 'block' : 'none';
+  document.getElementById('btnConectar').textContent   = chk ? 'Conectar ao Gist existente' : 'Criar novo Gist e conectar';
+}
+
+async function conectar() {
+  const token    = document.getElementById('inToken').value.trim();
+  const useExist = document.getElementById('chkExistente').checked;
+  const existId  = document.getElementById('inGistId').value.trim();
+  const status   = document.getElementById('statusConexao');
+  const btn      = document.getElementById('btnConectar');
+
+  if(!token) { status.style.color='var(--red)'; status.textContent='Cole o token antes de continuar.'; return; }
+  btn.disabled=true; btn.textContent='Conectando…'; status.textContent='';
+
+  try {
+    // Valida token
+    const me = await fetch('https://api.github.com/user', { headers:{'Authorization':'token '+token} });
+    if(!me.ok) throw new Error('Token inválido ou sem permissão.');
+    const user = await me.json();
+
+    let gistId = '';
+
+    if(useExist && existId) {
+      // Verifica se Gist existe
+      const ck = await fetch(`https://api.github.com/gists/${existId}`, { headers:{'Authorization':'token '+token} });
+      if(!ck.ok) throw new Error('Gist ID não encontrado ou sem acesso.');
+      gistId = existId;
+    } else {
+      // Cria novo Gist com dados locais atuais
+      const payload = { schedule, tasks, ts: Date.now() };
+      const cr = await fetch('https://api.github.com/gists', {
+        method:'POST',
+        headers:{'Authorization':'token '+token,'Content-Type':'application/json'},
+        body: JSON.stringify({
+          description:'Agenda sync - '+user.login,
+          public:false,
+          files:{ [GIST_FILE]:{ content:JSON.stringify(payload) } }
+        })
+      });
+      if(!cr.ok) throw new Error('Erro ao criar Gist. Verifique a permissão gist no token.');
+      gistId = (await cr.json()).id;
+    }
+
+    // Salva credenciais
+    lsRawSet('g_token', token);
+    lsRawSet('g_id',    gistId);
+
+    // SEMPRE envia os dados locais → Gist ao conectar
+    // (garante que o Gist recebe os dados corretos deste dispositivo)
+    await syncPush(true);
+
+    setSyncUI('ok','Sincronizado ✓');
+    renderSyncPage();
+    addLog('🔗 Conectado como '+user.login+'. Dados locais enviados ao Gist.');
+    addLog('📋 Gist ID: '+gistId);
+
+  } catch(e) {
+    status.style.color='var(--red)';
+    status.textContent='❌ '+e.message;
+  } finally {
+    btn.disabled=false;
+    toggleExistente();
+  }
+}
+
+function desconectar() {
+  if(!confirm('Desconectar? Os dados locais são mantidos.')) return;
+  lsDel('g_token'); lsDel('g_id');
+  setSyncUI('off','Sem sync');
+  renderSyncPage();
+}
+
+function renderSyncPage() {
+  const ok = G.ok();
+  document.getElementById('blockConectado').style.display = ok ? 'block' : 'none';
+  document.getElementById('blockSetup').style.display     = ok ? 'none'  : 'block';
+  if(ok) {
+    document.getElementById('showToken').textContent  = G.token().slice(0,8)+'••••••••••••••••••••';
+    document.getElementById('showGistId').textContent = G.id();
+  }
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+const DAY_KEYS  = ['seg','ter','qua','qui','sex'];
+const DAY_NAMES = {seg:'Segunda-feira',ter:'Terça-feira',qua:'Quarta-feira',qui:'Quinta-feira',sex:'Sexta-feira'};
+
+function uid()         { return 'e'+Date.now()+Math.random().toString(36).slice(2,5); }
+function getTodayKey() { return DAY_KEYS[new Date().getDay()-1]||null; }
+function getNow()      { const n=new Date(); return n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0'); }
+function toMin(t)      { const [h,m]=t.split(':').map(Number); return h*60+m; }
+function inNow(ev)     { const n=toMin(getNow()); return n>=toMin(ev.start)&&n<toMin(ev.end); }
+function sorted(evs)   { return [...evs].sort((a,b)=>toMin(a.start)-toMin(b.start)); }
+function dateLong() {
+  const d=new Date();
+  return ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()]
+    +', '+d.getDate()+' de '
+    +['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][d.getMonth()]
+    +' '+d.getFullYear();
+}
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+function renderAll() { renderTopbar(); renderToday(); renderWeek(); renderTasks(); renderConfig(); }
+
+function renderTopbar() {
+  document.getElementById('topbarDate').innerHTML = getNow()+'<br>'+dateLong();
+}
+
+function eCard(ev, key, opacity) {
+  const cur = inNow(ev);
+  return `<div class="event-card ${cur?'current':''}" style="${opacity?'opacity:'+opacity:''}">
+    <div class="event-time"><span class="tr">${ev.start}</span>${ev.end}</div>
+    <div class="event-body"><div class="event-title">${ev.title}</div></div>
+    <div class="event-actions"><button class="btn btn-ghost btn-icon btn-sm" onclick='openEventModal(${JSON.stringify(ev)},"${key}")'>✏️</button></div>
+  </div>`;
+}
+
+function renderToday() {
+  const key=getTodayKey();
+  const lbl=document.getElementById('todayLabel');
+  const slot=document.getElementById('currentSlot');
+  const box=document.getElementById('todayEvents');
+  if(!key){lbl.textContent='Fim de semana 🌴';box.innerHTML='<div class="empty"><p>Sem agenda para hoje!</p></div>';slot.innerHTML='';return;}
+  lbl.innerHTML=`${DAY_NAMES[key]} <span class="badge">Hoje</span>`;
+  const cur=(schedule[key]||[]).find(inNow);
+  slot.innerHTML=cur?`<div class="current-slot"><div class="dot"></div><strong>${cur.start}–${cur.end}</strong>&nbsp;${cur.title}</div>`:'';
+  const evs=sorted(schedule[key]||[]);
+  if(!evs.length){box.innerHTML='<div class="empty"><p>Nenhum evento para hoje.</p></div>';return;}
+  const now=toMin(getNow());
+  box.innerHTML=evs.map(ev=>eCard(ev,key,toMin(ev.end)<now?'.72':null)).join('');
+}
+
+let weekView='compact';
+function setWeekView(v) {
+  weekView=v;
+  document.getElementById('vbtn-compact').classList.toggle('active',v==='compact');
+  document.getElementById('vbtn-full').classList.toggle('active',v==='full');
+  renderWeek();
+}
+function renderWeek() {
+  const box=document.getElementById('weekEvents');
+  const tk=getTodayKey();
+  let html='';
+  DAY_KEYS.forEach(key=>{
+    const evs=sorted(schedule[key]||[]);
+    const today=key===tk;
+    if(weekView==='compact'&&!today&&!evs.length) return;
+    html+=`<div class="day-block"><div class="day-label">${DAY_NAMES[key]}${today?' <span class="day-today-pill">Hoje</span>':''}</div>`;
+    if(weekView==='compact'&&!today){
+      html+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">';
+      evs.forEach(ev=>{html+=`<span style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:.78rem;color:#fff">${ev.start} ${ev.title.split(' ').slice(0,4).join(' ')}…</span>`;});
+      html+='</div>';
+    } else {
+      if(!evs.length) html+='<div style="font-size:.8rem;color:#666;padding:6px 0;">Sem eventos</div>';
+      else evs.forEach(ev=>{html+=eCard(ev,key,null);});
+    }
+    html+='</div>';
+  });
+  box.innerHTML=html||'<div class="empty"><p>Agenda vazia.</p></div>';
+}
+
+function renderTasks() {
+  const box=document.getElementById('taskList');
+  const badge=document.getElementById('taskBadge');
+  badge.textContent=tasks.filter(t=>!t.done).length;
+  if(!tasks.length){box.innerHTML='<div class="empty"><p>Nenhuma tarefa.</p></div>';return;}
+  const ord=[...tasks.filter(t=>!t.done),...tasks.filter(t=>t.done)];
+  const cats={};
+  ord.forEach(t=>{const c=t.cat||'Geral';if(!cats[c])cats[c]=[];cats[c].push(t);});
+  let html='';
+  Object.entries(cats).forEach(([cat,items])=>{
+    html+=`<div style="margin-bottom:20px"><div class="day-label">${cat}</div>`;
+    items.forEach(t=>{
+      html+=`<div class="task-item ${t.done?'done':''}">
+        <button class="task-check" onclick="toggleTask('${t.id}')">
+          ${t.done?'<svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+        </button>
+        <div class="task-title">${t.title}</div>
+        <div class="task-actions"><button class="btn btn-ghost btn-icon btn-sm" onclick='openTaskModal(${JSON.stringify(t)})'>✏️</button></div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  box.innerHTML=html;
+}
+
+function renderConfig() {
+  const box=document.getElementById('configDays');
+  let html='';
+  DAY_KEYS.forEach(key=>{
+    const evs=sorted(schedule[key]||[]);
+    html+=`<div class="day-block"><div class="day-label" style="justify-content:space-between">${DAY_NAMES[key]}<button class="btn btn-ghost btn-sm" onclick="openEventModal(null,'${key}')">+ Evento</button></div>`;
+    evs.forEach(ev=>{html+=eCard(ev,key,null);});
+    if(!evs.length) html+='<div style="font-size:.8rem;color:#666;padding:6px 0;">Sem eventos</div>';
+    html+='</div>';
+  });
+  box.innerHTML=html;
+}
+
+// ══════════════════════════════════════════════
+//  PAGES
+// ══════════════════════════════════════════════
+let currentPage='hoje';
+const PAGE_IDX={hoje:0,semana:1,tarefas:2,config:3,sync:4};
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===PAGE_IDX[id]));
+  document.getElementById('page-'+id).classList.add('active');
+  currentPage=id;
+  if(id==='hoje')   renderToday();
+  if(id==='semana') renderWeek();
+  if(id==='tarefas')renderTasks();
+  if(id==='config') renderConfig();
+  if(id==='sync')   renderSyncPage();
+}
+
+// ══════════════════════════════════════════════
+//  MODAIS
+// ══════════════════════════════════════════════
+let editingEvent=null,editingEventDay=null;
+function openEventModal(ev,dayKey) {
+  editingEvent=ev; editingEventDay=dayKey||'seg';
+  document.getElementById('eventModalTitle').textContent=ev?'Editar Evento':'Novo Evento';
+  document.getElementById('eventDay').value=editingEventDay;
+  document.getElementById('eventStart').value=ev?ev.start:'08:00';
+  document.getElementById('eventEnd').value=ev?ev.end:'09:00';
+  document.getElementById('eventTitle').value=ev?ev.title:'';
+  document.getElementById('deleteEventBtn').style.display=ev?'inline-flex':'none';
+  document.getElementById('eventModal').classList.add('open');
+}
+function closeEventModal(){document.getElementById('eventModal').classList.remove('open');}
+function saveEvent() {
+  const day=document.getElementById('eventDay').value;
+  const start=document.getElementById('eventStart').value;
+  const end=document.getElementById('eventEnd').value;
+  const title=document.getElementById('eventTitle').value.trim();
+  if(!title){alert('Preencha a descrição.');return;}
+  if(!schedule[day])schedule[day]=[];
+  if(editingEvent){
+    if(editingEventDay!==day) schedule[editingEventDay]=schedule[editingEventDay].filter(e=>e.id!==editingEvent.id);
+    const idx=schedule[day].findIndex(e=>e.id===editingEvent.id);
+    const upd={id:editingEvent.id,start,end,title};
+    if(idx>=0)schedule[day][idx]=upd; else schedule[day].push(upd);
+  } else {
+    schedule[day].push({id:uid(),start,end,title});
+  }
+  saveSchedule(schedule); saveAndPush('schedule'); closeEventModal(); renderAll();
+}
+function deleteEvent() {
+  if(!editingEvent||!confirm('Excluir este evento?'))return;
+  schedule[editingEventDay]=(schedule[editingEventDay]||[]).filter(e=>e.id!==editingEvent.id);
+  saveSchedule(schedule); saveAndPush('schedule'); closeEventModal(); renderAll();
+}
+
+let editingTask=null;
+function openTaskModal(task) {
+  editingTask=task||null;
+  document.getElementById('taskModalTitle').textContent=task?'Editar Tarefa':'Nova Tarefa';
+  document.getElementById('taskTitle').value=task?task.title:'';
+  document.getElementById('taskCat').value=task?(task.cat||''):'';
+  document.getElementById('deleteTaskBtn').style.display=task?'inline-flex':'none';
+  document.getElementById('taskModal').classList.add('open');
+}
+function closeTaskModal(){document.getElementById('taskModal').classList.remove('open');}
+function saveTask() {
+  const title=document.getElementById('taskTitle').value.trim();
+  const cat=document.getElementById('taskCat').value.trim()||'Geral';
+  if(!title){alert('Preencha a descrição.');return;}
+  if(editingTask){const idx=tasks.findIndex(t=>t.id===editingTask.id);if(idx>=0)tasks[idx]={...tasks[idx],title,cat};}
+  else tasks.unshift({id:uid(),title,cat,done:false});
+  saveTasks(tasks); saveAndPush('tasks'); closeTaskModal(); renderTasks();
+}
+function deleteTask() {
+  if(!editingTask||!confirm('Excluir esta tarefa?'))return;
+  tasks=tasks.filter(t=>t.id!==editingTask.id);
+  saveTasks(tasks); saveAndPush('tasks'); closeTaskModal(); renderTasks();
+}
+function toggleTask(id) {
+  const t=tasks.find(t=>t.id===id);
+  if(t){t.done=!t.done;saveTasks(tasks);saveAndPush('tasks');renderTasks();}
+}
+
+document.getElementById('eventModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEventModal();});
+document.getElementById('taskModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeTaskModal();});
+
+// ══════════════════════════════════════════════
+//  INIT — SEM PULL AUTOMÁTICO
+// ══════════════════════════════════════════════
+renderSyncPage();
+setSyncUI(G.ok()?'ok':'off', G.ok()?'Sincronizado ✓':'Sem sync');
+renderAll();
+setInterval(()=>{ renderTopbar(); if(currentPage==='hoje') renderToday(); }, 30000);
+</script>
+</body>
+</html>
