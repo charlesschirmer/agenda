@@ -215,6 +215,13 @@
           <li>Clique <strong style="color:#fff">Generate token</strong> e copie o token gerado</li>
         </ol>
       </div>
+      <div class="sync-card" style="background:rgba(79,142,247,.06);border-color:rgba(79,142,247,.25)">
+        <h3>📱 Qual dispositivo é este?</h3>
+        <p style="margin-bottom:0">
+          <strong style="color:#fff">1º dispositivo (computador):</strong> deixe desmarcado "Já tenho Gist ID" — vai criar um Gist novo com seus dados locais.<br><br>
+          <strong style="color:#fff">2º dispositivo (celular):</strong> marque "Já tenho Gist ID" e cole o ID que aparece no computador — vai receber os dados do computador.
+        </p>
+      </div>
       <div class="sync-card">
         <h3>Conectar</h3>
         <div class="form-group">
@@ -468,7 +475,9 @@ function saveAndPush(type) {
 function toggleExistente() {
   const chk = document.getElementById('chkExistente').checked;
   document.getElementById('grupoGistId').style.display = chk ? 'block' : 'none';
-  document.getElementById('btnConectar').textContent   = chk ? 'Conectar ao Gist existente' : 'Criar novo Gist e conectar';
+  document.getElementById('btnConectar').textContent   = chk
+    ? '⬇ Conectar e receber dados do Gist'
+    : '⬆ Conectar e enviar dados locais ao Gist';
 }
 
 async function conectar() {
@@ -514,16 +523,16 @@ async function conectar() {
     lsRawSet('g_token', token);
     lsRawSet('g_id',    gistId);
 
-    // SEMPRE envia os dados locais → Gist ao conectar
-    // (garante que o Gist recebe os dados corretos deste dispositivo)
-    await syncPush(true);
-    // Marca o timestamp do meu envio neste dispositivo
-    lsRawSet('ag_my_push', String(Date.now()));
+    if(useExist && existId) {
+      // Segundo dispositivo: puxa os dados do Gist
+      await syncPull();
+      addLog('⬇️ Dados recebidos do Gist.');
+    } else {
+      // Primeiro dispositivo: envia dados locais para o novo Gist
+      await syncPush(false);
+    }
 
-    setSyncUI('ok','Sincronizado ✓');
     renderSyncPage();
-    addLog('🔗 Conectado como '+user.login+'. Dados locais enviados ao Gist.');
-    addLog('📋 Gist ID: '+gistId);
 
   } catch(e) {
     status.style.color='var(--red)';
