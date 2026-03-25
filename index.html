@@ -151,6 +151,16 @@
   .day-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
   .day-detail-title{font-size:.88rem;font-weight:600;color:#fff;}
 
+  /* MINUTA */
+  .minuta-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .2s;display:flex;align-items:center;gap:12px;}
+  .minuta-item:hover{border-color:var(--accent);}
+  .minuta-item-date{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--accent);white-space:nowrap;min-width:52px;}
+  .minuta-item-body{flex:1;min-width:0;}
+  .minuta-item-title{font-size:.88rem;font-weight:500;color:#fff;line-height:1.3;}
+  .minuta-item-sub{font-size:.72rem;color:#666;margin-top:2px;}
+  .minuta-item-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
+  .minuta-item:hover .minuta-item-actions{opacity:1;}
+
   /* WEEK SECTION DIVIDER */
   .week-divider{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
 
@@ -176,6 +186,7 @@
   <button class="tab" onclick="showPage('semana')">Semana</button>
   <button class="tab" onclick="showPage('mes')">Mês</button>
   <button class="tab" onclick="showPage('tarefas')">Tarefas</button>
+  <button class="tab" onclick="showPage('minuta')">Minuta</button>
   <button class="tab" onclick="showPage('template')">Template</button>
   <button class="tab" onclick="showPage('sync')">⇄ Sync</button>
 </div>
@@ -218,6 +229,14 @@
       <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Tarefa</button>
     </div>
     <div id="taskList"></div>
+  </div>
+
+  <!-- MINUTA -->
+  <div id="page-minuta" class="page">
+    <div class="section-header">
+      <div class="section-title">Minutas <span class="badge" id="minutaBadge">0</span></div>
+    </div>
+    <div id="minutaList"></div>
   </div>
 
   <!-- TEMPLATE -->
@@ -309,6 +328,23 @@
     style="flex:1;width:100%;background:#0f1117;border:none;outline:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.8;padding:20px 18px;resize:none;"></textarea>
 </div>
 
+<!-- MINUTA FULLSCREEN -->
+<div id="minutaFullscreen" style="display:none;position:fixed;inset:0;background:#0f1117;z-index:500;flex-direction:column;">
+  <div style="background:#1a1d27;border-bottom:1px solid #2e334d;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div style="min-width:0">
+      <div style="font-size:.72rem;color:var(--orange);margin-bottom:2px">Minuta</div>
+      <div style="font-size:.95rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis" id="minutaFsTitle"></div>
+      <div style="font-size:.72rem;color:#666;margin-top:1px" id="minutaFsDate"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn btn-primary btn-sm" onclick="saveMinutaFs()">💾 Salvar</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeMinutaFs()">✕ Fechar</button>
+    </div>
+  </div>
+  <textarea id="minutaFsText"
+    style="flex:1;width:100%;background:#0f1117;border:none;outline:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.8;padding:20px 18px;resize:none;"></textarea>
+</div>
+
 <!-- MODAL EVENTO (agenda real) -->
 <div class="modal-overlay" id="eventModal">
   <div class="modal">
@@ -332,6 +368,10 @@
         <button class="btn btn-ghost btn-sm" onclick="expandPauta()" id="btnExpandPauta" type="button">⤢ Expandir</button>
       </div>
       <textarea class="form-input" id="eventPauta" rows="5" placeholder="• Ponto 1&#10;• Ponto 2&#10;• Ponto 3" style="resize:vertical;line-height:1.6;font-size:.85rem"></textarea>
+    </div>
+    <div style="margin-bottom:13px">
+      <button class="btn btn-ghost btn-sm" onclick="gerarMinuta()" type="button" style="color:var(--orange);border-color:rgba(247,147,79,.3)">📝 Gerar Minuta</button>
+      <span style="font-size:.72rem;color:#555;margin-left:8px">Cria uma minuta editável a partir deste evento</span>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeEventModal()">Cancelar</button>
@@ -559,7 +599,7 @@ async function syncPush(silent=false){
   if(!G.ok())return;
   if(!silent)setSyncUI('busy','Enviando…');
   try{
-    const payload={agenda,template,tasks,ts:Date.now()};
+    const payload={agenda,template,tasks,minutas,ts:Date.now()};
     const r=await fetch(`https://api.github.com/gists/${G.id()}`,{
       method:'PATCH',
       headers:{'Authorization':'token '+G.token(),'Content-Type':'application/json'},
@@ -590,13 +630,15 @@ async function syncPull(){
     agenda   = remote.agenda    || agenda;
     template = remote.template  || template;
     tasks    = remote.tasks     || tasks;
+    minutas  = remote.minutas   || minutas;
     lsSet('ag2_agenda',   agenda);
     lsSet('ag2_template', template);
     lsSet('ag2_tasks',    tasks);
+    lsSet('ag2_minutas',  minutas);
     lsRawSet('ag_my_push',String(remote.ts||Date.now()));
     renderAll();
     setSyncUI('ok','Sincronizado ✓');
-    addLog('✅ Agenda, Template e Tarefas atualizados.');
+    addLog('✅ Agenda, Template, Tarefas e Minutas atualizados.');
   }catch(e){
     setSyncUI('err','Erro ao buscar');
     addLog('❌ '+e.message);
@@ -629,7 +671,7 @@ async function conectar(){
       if(!ck.ok)throw new Error('Gist ID não encontrado.');
       gistId=existId;
     } else {
-      const payload={agenda,template,tasks,ts:Date.now()};
+      const payload={agenda,template,tasks,minutas,ts:Date.now()};
       const cr=await fetch('https://api.github.com/gists',{
         method:'POST',
         headers:{'Authorization':'token '+token,'Content-Type':'application/json'},
@@ -662,10 +704,12 @@ function limparDadosLocais(){
   lsDel('ag2_agenda');
   lsDel('ag2_template');
   lsDel('ag2_tasks');
+  lsDel('ag2_minutas');
   lsDel('ag_my_push');
   agenda   = {};
   template = clone(TEMPLATE_PADRAO);
   tasks    = clone(TAREFAS_PADRAO);
+  minutas  = [];
   renderAll();
   addLog('🗑 Dados locais limpos. Padrão do HTML carregado.');
   alert('Dados locais limpos! Agora reconecte ao Gist para receber os dados sincronizados.');
@@ -951,7 +995,7 @@ function renderTemplate(){
 //  PAGES
 // ═══════════════════════════════════════════
 let currentPage='hoje';
-const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,template:4,sync:5};
+const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,minuta:4,template:5,sync:6};
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===PAGE_IDX[id]));
@@ -961,8 +1005,121 @@ function showPage(id){
   if(id==='semana')  renderWeek();
   if(id==='mes')     renderCal();
   if(id==='tarefas') renderTasks();
+  if(id==='minuta')  renderMinuta();
   if(id==='template')renderTemplate();
   if(id==='sync')    renderSyncPage();
+}
+
+// ═══════════════════════════════════════════
+//  MINUTAS
+//  minutas = [ {id, date, title, texto, criadoEm}, ... ]
+// ═══════════════════════════════════════════
+let minutas = lsGet('ag2_minutas', []);
+function saveMinutas(){ lsSet('ag2_minutas', minutas); if(G.ok()) syncPush(true); }
+
+function gerarMinuta(){
+  // Salva o evento primeiro para não perder dados
+  const dateStr  = document.getElementById('eventDate').value;
+  const title    = document.getElementById('eventTitle').value.trim() || 'Sem título';
+  const pauta    = document.getElementById('eventPauta').value.trim();
+  // Verifica se já existe minuta para este evento (mesma data + título)
+  const existing = minutas.find(m => m.date===dateStr && m.title===title);
+  if(existing){
+    if(!confirm('Já existe uma minuta para este evento. Deseja abri-la?')) return;
+    openMinutaFs(existing.id);
+    return;
+  }
+  const novaMinuta = {
+    id: uid(),
+    date: dateStr,
+    title,
+    texto: pauta ? `PAUTA:\n${pauta}\n\n---\n\nMINUTA:\n` : '',
+    criadoEm: Date.now()
+  };
+  minutas.unshift(novaMinuta);
+  saveMinutas();
+  renderMinuta();
+  openMinutaFs(novaMinuta.id);
+}
+
+let editingMinutaId = null;
+
+function openMinutaFs(id){
+  const m = minutas.find(m=>m.id===id);
+  if(!m) return;
+  editingMinutaId = id;
+  document.getElementById('minutaFsTitle').textContent = m.title;
+  document.getElementById('minutaFsDate').textContent  = dateLong(m.date);
+  document.getElementById('minutaFsText').value        = m.texto || '';
+  const fs = document.getElementById('minutaFullscreen');
+  fs.style.display = 'flex';
+  document.getElementById('minutaFsText').focus();
+}
+
+function saveMinutaFs(){
+  const m = minutas.find(m=>m.id===editingMinutaId);
+  if(!m) return;
+  m.texto = document.getElementById('minutaFsText').value;
+  saveMinutas();
+  renderMinuta();
+  closeMinutaFs();
+}
+
+function closeMinutaFs(){
+  // Auto-salva ao fechar
+  const m = minutas.find(m=>m.id===editingMinutaId);
+  if(m) {
+    m.texto = document.getElementById('minutaFsText').value;
+    saveMinutas();
+    renderMinuta();
+  }
+  document.getElementById('minutaFullscreen').style.display='none';
+  editingMinutaId=null;
+}
+
+function deleteMinuta(id){
+  if(!confirm('Excluir esta minuta permanentemente?')) return;
+  minutas = minutas.filter(m=>m.id!==id);
+  saveMinutas();
+  renderMinuta();
+}
+
+function renderMinuta(){
+  const box   = document.getElementById('minutaList');
+  const badge = document.getElementById('minutaBadge');
+  if(!box) return;
+  badge.textContent = minutas.length;
+  if(!minutas.length){
+    box.innerHTML='<div class="empty"><p>Nenhuma minuta ainda.<br>Abra um evento e clique em <strong>📝 Gerar Minuta</strong>.</p></div>';
+    return;
+  }
+  // Ordem decrescente por data
+  const sorted=[...minutas].sort((a,b)=>{
+    if(b.date!==a.date) return b.date.localeCompare(a.date);
+    return b.criadoEm-a.criadoEm;
+  });
+  let html='';
+  let lastDate='';
+  sorted.forEach(m=>{
+    if(m.date!==lastDate){
+      if(lastDate) html+='</div>';
+      html+=`<div style="margin-bottom:20px"><div class="day-label">${dateLong(m.date)}</div>`;
+      lastDate=m.date;
+    }
+    const preview = m.texto ? m.texto.replace(/\n/g,' ').slice(0,60)+'…' : 'Minuta vazia';
+    html+=`<div class="minuta-item" onclick="openMinutaFs('${m.id}')">
+      <div class="minuta-item-date">${dateShort(m.date)}</div>
+      <div class="minuta-item-body">
+        <div class="minuta-item-title">${m.title}</div>
+        <div class="minuta-item-sub">${preview}</div>
+      </div>
+      <div class="minuta-item-actions">
+        <button class="btn btn-danger btn-icon btn-sm" onclick="event.stopPropagation();deleteMinuta('${m.id}')">🗑</button>
+      </div>
+    </div>`;
+  });
+  if(lastDate) html+='</div>';
+  box.innerHTML=html;
 }
 
 function expandPauta(){
@@ -1130,9 +1287,11 @@ if(G.ok()){
       agenda   = remote.agenda   || agenda;
       template = remote.template || template;
       tasks    = remote.tasks    || tasks;
+      minutas  = remote.minutas  || minutas;
       lsSet('ag2_agenda',   agenda);
       lsSet('ag2_template', template);
       lsSet('ag2_tasks',    tasks);
+      lsSet('ag2_minutas',  minutas);
       lsRawSet('ag_my_push',String(remoteTs));
       renderAll();
       addLog('✅ Dados atualizados automaticamente.');
