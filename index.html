@@ -296,6 +296,19 @@
 
 </div><!-- /main -->
 
+<!-- PAUTA FULLSCREEN -->
+<div id="pautaFullscreen" style="display:none;position:fixed;inset:0;background:#0f1117;z-index:500;flex-direction:column;">
+  <div style="background:#1a1d27;border-bottom:1px solid #2e334d;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    <div style="min-width:0">
+      <div style="font-size:.72rem;color:#888;margin-bottom:2px">Pauta</div>
+      <div style="font-size:.95rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="pautaFsTitle"></div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="closePauta()" style="flex-shrink:0">✕ Fechar</button>
+  </div>
+  <textarea id="pautaFsText"
+    style="flex:1;width:100%;background:#0f1117;border:none;outline:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.8;padding:20px 18px;resize:none;"></textarea>
+</div>
+
 <!-- MODAL EVENTO (agenda real) -->
 <div class="modal-overlay" id="eventModal">
   <div class="modal">
@@ -314,7 +327,10 @@
       <input type="text" class="form-input" id="eventTitle" placeholder="Ex: Reunião com gerente...">
     </div>
     <div class="form-group">
-      <label class="form-label">Pauta <span style="font-size:.72rem;color:#555;font-weight:400">— assuntos a tratar (visível só aqui)</span></label>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <label class="form-label" style="margin:0">Pauta <span style="font-size:.72rem;color:#555;font-weight:400">— assuntos a tratar (visível só aqui)</span></label>
+        <button class="btn btn-ghost btn-sm" onclick="expandPauta()" id="btnExpandPauta" type="button">⤢ Expandir</button>
+      </div>
       <textarea class="form-input" id="eventPauta" rows="5" placeholder="• Ponto 1&#10;• Ponto 2&#10;• Ponto 3" style="resize:vertical;line-height:1.6;font-size:.85rem"></textarea>
     </div>
     <div class="form-actions">
@@ -947,6 +963,22 @@ function showPage(id){
   if(id==='tarefas') renderTasks();
   if(id==='template')renderTemplate();
   if(id==='sync')    renderSyncPage();
+}
+
+function expandPauta(){
+  const title = document.getElementById('eventTitle').value || 'Sem título';
+  const text  = document.getElementById('eventPauta').value;
+  const fs    = document.getElementById('pautaFullscreen');
+  document.getElementById('pautaFsTitle').textContent = title;
+  document.getElementById('pautaFsText').value = text;
+  fs.style.display = 'flex';
+  document.getElementById('pautaFsText').focus();
+}
+function closePauta(){
+  // Salva o que foi editado no fullscreen de volta para o textarea normal
+  const text = document.getElementById('pautaFsText').value;
+  document.getElementById('eventPauta').value = text;
+  document.getElementById('pautaFullscreen').style.display = 'none';
 }
 
 // ═══════════════════════════════════════════
