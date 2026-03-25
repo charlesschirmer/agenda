@@ -416,7 +416,7 @@ async function syncPush(silent=false) {
       body: JSON.stringify({ files:{ [GIST_FILE]:{ content:JSON.stringify(payload) } } })
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
-    lsRawSet('ag_last_push', String(payload.ts));
+    lsRawSet('ag_my_push', String(payload.ts));
     setSyncUI('ok','Sincronizado ✓');
     if(!silent) addLog('✅ Dados enviados ao Gist com sucesso.');
   } catch(e) {
@@ -442,7 +442,7 @@ async function syncPull() {
     tasks    = remote.tasks    || tasks;
     lsSet('ag_schedule', schedule);
     lsSet('ag_tasks',    tasks);
-    lsRawSet('ag_last_push', String(remote.ts||Date.now()));
+    lsRawSet('ag_my_push', String(remote.ts||Date.now()));
     renderAll();
     setSyncUI('ok','Sincronizado ✓');
     addLog('✅ Agenda e Tarefas atualizadas do Gist.');
@@ -517,6 +517,8 @@ async function conectar() {
     // SEMPRE envia os dados locais → Gist ao conectar
     // (garante que o Gist recebe os dados corretos deste dispositivo)
     await syncPush(true);
+    // Marca o timestamp do meu envio neste dispositivo
+    lsRawSet('ag_my_push', String(Date.now()));
 
     setSyncUI('ok','Sincronizado ✓');
     renderSyncPage();
@@ -763,7 +765,6 @@ renderAll();
 setInterval(()=>{ renderTopbar(); if(currentPage==='hoje') renderToday(); }, 30000);
 
 if(G.ok()) {
-  // Sempre puxa do Gist ao abrir — garante dados atualizados em todos os dispositivos
   setSyncUI('busy','Atualizando…');
   fetch(`https://api.github.com/gists/${G.id()}?t=${Date.now()}`, {
     headers:{'Authorization':'token '+G.token()}
@@ -774,13 +775,13 @@ if(G.ok()) {
     if(!raw) { setSyncUI('ok','Sincronizado ✓'); return; }
     const remote = JSON.parse(raw);
     const remoteTs = remote.ts || 0;
-    const localTs  = parseInt(lsRaw('ag_last_push')||'0');
-    if(remoteTs > localTs) {
+    const myLastPush = parseInt(lsRaw('ag_my_push')||'0');
+    // Só NÃO atualiza se EU mesmo fui o último a enviar (meu push é mais recente)
+    if(remoteTs > myLastPush) {
       schedule = remote.schedule || schedule;
       tasks    = remote.tasks    || tasks;
       lsSet('ag_schedule', schedule);
       lsSet('ag_tasks',    tasks);
-      lsRawSet('ag_last_push', String(remoteTs));
       renderAll();
     }
     setSyncUI('ok','Sincronizado ✓');
