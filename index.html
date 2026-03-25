@@ -671,8 +671,9 @@ function renderSyncPage(){
 // ═══════════════════════════════════════════
 //  APLICAR TEMPLATE → AGENDA
 // ═══════════════════════════════════════════
-function applyTemplate(dow) {
-  const dateStr = nextOccurrence(dow);
+function applyTemplate(dow, dateStr) {
+  // Se uma data específica foi passada, usa ela; caso contrário calcula a próxima ocorrência
+  if(!dateStr) dateStr = nextOccurrence(dow);
   const dayName = DAY_NAMES[dow];
   const formatted = dateLong(dateStr);
   const existing = agenda[dateStr]||[];
@@ -731,7 +732,7 @@ function renderToday(){
   const cur=evs.find(inNow);
   slot.innerHTML=cur?`<div class="current-slot"><div class="dot"></div><strong>${cur.start}–${cur.end}</strong>&nbsp;${cur.title}</div>`:'';
   if(!evs.length){
-    box.innerHTML=`<div class="empty"><p>Nenhum evento para hoje.</p><br><button class="btn btn-ghost btn-sm" onclick="applyTemplate(${new Date().getDay()||1})">📋 Aplicar template de hoje</button></div>`;
+    box.innerHTML=`<div class="empty"><p>Nenhum evento para hoje.</p><br><button class="btn btn-ghost btn-sm" onclick="applyTemplate(${new Date().getDay()||1},'${ds}')">📋 Aplicar template de hoje</button></div>`;
     return;
   }
   box.innerHTML=evs.map(ev=>eCard(ev,ds)).join('');
@@ -776,11 +777,11 @@ function renderWeek(){
       if(!evs.length){
         html+=`<div style="font-size:.78rem;color:#555;padding:4px 0;display:flex;align-items:center;gap:10px;">
           Sem eventos
-          <button class="btn btn-success btn-sm" onclick="applyTemplate(${dow})">📋 Aplicar template</button>
+          <button class="btn btn-success btn-sm" onclick="applyTemplate(${dow},'${str}')">📋 Aplicar template</button>
         </div>`;
       } else {
         html+=evs.map(ev=>eCard(ev,str)).join('');
-        html+=`<div style="margin-top:6px"><button class="btn btn-success btn-sm" onclick="applyTemplate(${dow})">📋 Aplicar template</button></div>`;
+        html+=`<div style="margin-top:6px"><button class="btn btn-success btn-sm" onclick="applyTemplate(${dow},'${str}')">📋 Aplicar template</button></div>`;
       }
       html+='</div>';
     });
@@ -854,7 +855,7 @@ function renderCalDay(str){
     if(dow>=1&&dow<=5){
       html+=`<div style="font-size:.8rem;color:#555;margin-bottom:10px;display:flex;align-items:center;gap:10px;">
         Sem eventos
-        <button class="btn btn-success btn-sm" onclick="applyTemplate(${dow});calSelectDay('${str}')">📋 Aplicar template</button>
+        <button class="btn btn-success btn-sm" onclick="applyTemplate(${dow},'${str}');calSelectDay('${str}')">📋 Aplicar template</button>
       </div>`;
     } else {
       html+='<div style="font-size:.8rem;color:#555">Sem eventos</div>';
@@ -864,7 +865,7 @@ function renderCalDay(str){
     const d=parseDate(str);
     const dow=d.getDay()===0?7:d.getDay();
     if(dow>=1&&dow<=5){
-      html+=`<div style="margin-top:8px"><button class="btn btn-success btn-sm" onclick="applyTemplate(${dow});calSelectDay('${str}')">📋 Aplicar template</button></div>`;
+      html+=`<div style="margin-top:8px"><button class="btn btn-success btn-sm" onclick="applyTemplate(${dow},'${str}');calSelectDay('${str}')">📋 Aplicar template</button></div>`;
     }
   }
   html+='</div>';
