@@ -313,6 +313,10 @@
       <label class="form-label">Descrição</label>
       <input type="text" class="form-input" id="eventTitle" placeholder="Ex: Reunião com gerente...">
     </div>
+    <div class="form-group">
+      <label class="form-label">Pauta <span style="font-size:.72rem;color:#555;font-weight:400">— assuntos a tratar (visível só aqui)</span></label>
+      <textarea class="form-input" id="eventPauta" rows="5" placeholder="• Ponto 1&#10;• Ponto 2&#10;• Ponto 3" style="resize:vertical;line-height:1.6;font-size:.85rem"></textarea>
+    </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeEventModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveEvent()">Salvar</button>
@@ -715,9 +719,12 @@ function eCard(ev, dateStr){
   const cur=inNow(ev);
   const now=toMin(getNow());
   const past=toMin(ev.end)<now && dateStr===todayStr();
+  const hasPauta = ev.pauta && ev.pauta.trim().length>0;
   return `<div class="event-card ${cur?'current':''}" style="${past?'opacity:.72':''}">
     <div class="event-time"><span class="tr">${ev.start}</span>${ev.end}</div>
-    <div class="event-body"><div class="event-title">${ev.title}</div></div>
+    <div class="event-body">
+      <div class="event-title">${ev.title}${hasPauta?' <span style="font-size:.65rem;color:#4f8ef7;margin-left:4px">📋</span>':''}</div>
+    </div>
     <div class="event-actions"><button class="btn btn-ghost btn-icon btn-sm" onclick='openEventModal(${JSON.stringify(ev)},"${dateStr}")'>✏️</button></div>
   </div>`;
 }
@@ -953,6 +960,7 @@ function openEventModal(ev, dateStr){
   document.getElementById('eventStart').value=ev?ev.start:'08:00';
   document.getElementById('eventEnd').value=ev?ev.end:'09:00';
   document.getElementById('eventTitle').value=ev?ev.title:'';
+  document.getElementById('eventPauta').value=ev?(ev.pauta||''):'';
   document.getElementById('deleteEventBtn').style.display=ev?'inline-flex':'none';
   document.getElementById('eventModal').classList.add('open');
 }
@@ -967,6 +975,7 @@ function saveEvent(){
   const start=document.getElementById('eventStart').value;
   const end=document.getElementById('eventEnd').value;
   const title=document.getElementById('eventTitle').value.trim();
+  const pauta=document.getElementById('eventPauta').value.trim();
   if(!title){alert('Preencha a descrição.');return;}
   if(!agenda[dateStr])agenda[dateStr]=[];
   if(editingEvent){
@@ -974,10 +983,10 @@ function saveEvent(){
       agenda[editingEventDate]=(agenda[editingEventDate]||[]).filter(e=>e.id!==editingEvent.id);
     }
     const idx=agenda[dateStr].findIndex(e=>e.id===editingEvent.id);
-    const upd={id:editingEvent.id,start,end,title};
+    const upd={id:editingEvent.id,start,end,title,pauta};
     if(idx>=0)agenda[dateStr][idx]=upd; else agenda[dateStr].push(upd);
   } else {
-    agenda[dateStr].push({id:uid(),start,end,title});
+    agenda[dateStr].push({id:uid(),start,end,title,pauta});
   }
   afterSaveEvent(dateStr);
 }
