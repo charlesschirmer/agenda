@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Agenda</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
@@ -753,39 +756,36 @@ document.getElementById('eventModal').addEventListener('click',e=>{if(e.target==
 document.getElementById('taskModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeTaskModal();});
 
 // ══════════════════════════════════════════════
-//  INIT — PULL AUTOMÁTICO SÓ SE GIST FOR MAIS NOVO
+//  INIT
 // ══════════════════════════════════════════════
 renderSyncPage();
 renderAll();
 setInterval(()=>{ renderTopbar(); if(currentPage==='hoje') renderToday(); }, 30000);
 
 if(G.ok()) {
-  setSyncUI('busy','Verificando…');
-  // Busca só o cabeçalho do Gist para comparar timestamp
+  // Sempre puxa do Gist ao abrir — garante dados atualizados em todos os dispositivos
+  setSyncUI('busy','Atualizando…');
   fetch(`https://api.github.com/gists/${G.id()}?t=${Date.now()}`, {
     headers:{'Authorization':'token '+G.token()}
   })
-  .then(r=>r.json())
+  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
   .then(data=>{
     const raw = data.files?.[GIST_FILE]?.content;
     if(!raw) { setSyncUI('ok','Sincronizado ✓'); return; }
     const remote = JSON.parse(raw);
-    const localTs  = parseInt(lsRaw('ag_last_push')||'0');
     const remoteTs = remote.ts || 0;
+    const localTs  = parseInt(lsRaw('ag_last_push')||'0');
     if(remoteTs > localTs) {
-      // Gist é mais novo — puxa silenciosamente
       schedule = remote.schedule || schedule;
       tasks    = remote.tasks    || tasks;
       lsSet('ag_schedule', schedule);
       lsSet('ag_tasks',    tasks);
       lsRawSet('ag_last_push', String(remoteTs));
       renderAll();
-      setSyncUI('ok','Sincronizado ✓');
-    } else {
-      setSyncUI('ok','Sincronizado ✓');
     }
+    setSyncUI('ok','Sincronizado ✓');
   })
-  .catch(()=>setSyncUI('err','Erro ao verificar'));
+  .catch(e=>{ setSyncUI('err','Erro sync'); console.error(e); });
 } else {
   setSyncUI('off','Sem sync');
 }
