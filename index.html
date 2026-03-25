@@ -766,27 +766,30 @@ setInterval(()=>{ renderTopbar(); if(currentPage==='hoje') renderToday(); }, 300
 
 if(G.ok()) {
   setSyncUI('busy','Atualizando…');
+  const myPush = parseInt(lsRaw('ag_my_push')||'0');
   fetch(`https://api.github.com/gists/${G.id()}?t=${Date.now()}`, {
     headers:{'Authorization':'token '+G.token()}
   })
   .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
   .then(data=>{
     const raw = data.files?.[GIST_FILE]?.content;
-    if(!raw) { setSyncUI('ok','Sincronizado ✓'); return; }
+    if(!raw) { setSyncUI('ok','Sincronizado ✓'); addLog('⚠️ Gist sem dados.'); return; }
     const remote = JSON.parse(raw);
     const remoteTs = remote.ts || 0;
-    const myLastPush = parseInt(lsRaw('ag_my_push')||'0');
-    // Só NÃO atualiza se EU mesmo fui o último a enviar (meu push é mais recente)
-    if(remoteTs > myLastPush) {
+    addLog(`📡 Gist ts: ${remoteTs}`);
+    addLog(`💾 Meu push: ${myPush}`);
+    addLog(`🔄 Vai atualizar: ${remoteTs > myPush ? 'SIM' : 'NÃO'}`);
+    if(remoteTs > myPush) {
       schedule = remote.schedule || schedule;
       tasks    = remote.tasks    || tasks;
       lsSet('ag_schedule', schedule);
       lsSet('ag_tasks',    tasks);
       renderAll();
+      addLog('✅ Dados atualizados do Gist!');
     }
     setSyncUI('ok','Sincronizado ✓');
   })
-  .catch(e=>{ setSyncUI('err','Erro sync'); console.error(e); });
+  .catch(e=>{ setSyncUI('err','Erro sync'); addLog('❌ Erro: '+e.message); });
 } else {
   setSyncUI('off','Sem sync');
 }
