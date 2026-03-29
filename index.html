@@ -161,6 +161,20 @@
   .minuta-item-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
   .minuta-item:hover .minuta-item-actions{opacity:1;}
 
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* MINUTA ESTRUTURADA */
+  .me-section{margin-bottom:22px;}
+  .me-section h2{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  .me-section h3{font-size:.88rem;font-weight:600;color:#fff;margin:12px 0 4px;}
+  .me-item{display:flex;gap:10px;margin-bottom:6px;font-size:.88rem;line-height:1.5;}
+  .me-item-dot{color:var(--accent);flex-shrink:0;margin-top:2px;}
+  .me-item-text{color:#ddd;}
+  .me-decisao{background:rgba(62,207,142,.07);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:6px;font-size:.86rem;color:#ccc;}
+  .me-decisao strong{color:var(--green);display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+  .me-acao{background:rgba(247,147,79,.07);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:6px;font-size:.86rem;color:#ccc;}
+  .me-acao strong{color:var(--orange);display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+
   /* WEEK SECTION DIVIDER */
   .week-divider{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
 
@@ -348,18 +362,54 @@
   </div>
 
   <!-- STATUS GRAVAÇÃO -->
-  <div id="gravarStatus" style="display:none;background:rgba(247,111,111,.08);border-bottom:1px solid rgba(247,111,111,.2);padding:8px 16px;display:none;align-items:center;gap:10px;">
+  <div id="gravarStatus" style="display:none;background:rgba(247,111,111,.08);border-bottom:1px solid rgba(247,111,111,.2);padding:8px 16px;align-items:center;gap:10px;">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1s infinite;flex-shrink:0"></div>
     <span style="font-size:.78rem;color:var(--red);font-weight:500">Gravando — fale agora</span>
     <span style="font-size:.72rem;color:#666;margin-left:auto" id="gravarTimer">00:00</span>
   </div>
 
-  <!-- TEXTO EM RECONHECIMENTO (interim) -->
+  <!-- TEXTO INTERIM -->
   <div id="interimText" style="display:none;padding:8px 18px;font-size:.85rem;color:#666;font-style:italic;background:#0f1117;border-bottom:1px solid #1a1d27;min-height:32px;"></div>
 
-  <!-- TEXTAREA PRINCIPAL -->
-  <textarea id="minutaFsText"
-    style="flex:1;width:100%;background:#0f1117;border:none;outline:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.8;padding:20px 18px;resize:none;"></textarea>
+  <!-- CONTEÚDO: editor OU minuta estruturada -->
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative">
+
+    <!-- EDITOR (modo padrão) -->
+    <div id="minutaEditorView" style="flex:1;display:flex;flex-direction:column;">
+      <textarea id="minutaFsText"
+        style="flex:1;width:100%;background:#0f1117;border:none;outline:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.8;padding:20px 18px;resize:none;"></textarea>
+      <!-- BOTÃO ESTRUTURAR -->
+      <div style="padding:12px 18px;border-top:1px solid #1a1d27;display:flex;align-items:center;gap:10px;background:#0f1117;">
+        <button class="btn btn-sm" onclick="estruturarMinuta()"
+          style="background:linear-gradient(135deg,rgba(124,106,247,.2),rgba(79,142,247,.2));color:#c4b8ff;border:1px solid rgba(124,106,247,.35);font-weight:600">
+          ✨ Estruturar Minuta
+        </button>
+        <span style="font-size:.72rem;color:#555">Organiza o texto com IA em tópicos e decisões</span>
+      </div>
+    </div>
+
+    <!-- RESULTADO ESTRUTURADO -->
+    <div id="minutaEstrutView" style="flex:1;display:none;flex-direction:column;">
+      <!-- sub-header -->
+      <div style="padding:10px 18px;border-bottom:1px solid #1a1d27;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0f1117;">
+        <span style="font-size:.78rem;color:#c4b8ff;font-weight:600">✨ Minuta estruturada</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="salvarEstruturada()">💾 Salvar esta versão</button>
+          <button class="btn btn-ghost btn-sm" onclick="voltarEditor()">✏️ Voltar ao editor</button>
+        </div>
+      </div>
+      <div id="minutaEstrutContent"
+        style="flex:1;overflow-y:auto;padding:20px 18px;color:#fff;font-family:'DM Sans',sans-serif;font-size:.92rem;line-height:1.8;"></div>
+    </div>
+
+    <!-- LOADING OVERLAY -->
+    <div id="estruturLoading" style="display:none;position:absolute;inset:0;background:rgba(15,17,23,.92);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+      <div style="width:36px;height:36px;border-radius:50%;border:3px solid #2e334d;border-top-color:#7c6af7;animation:spin 1s linear infinite"></div>
+      <div style="font-size:.88rem;color:#c4b8ff;font-weight:500">Estruturando com IA…</div>
+      <div style="font-size:.75rem;color:#555" id="estruturLoadingMsg">Analisando transcrição</div>
+    </div>
+
+  </div>
 </div>
 
 <!-- MODAL EVENTO (agenda real) -->
@@ -1138,6 +1188,153 @@ function renderMinuta(){
   });
   if(lastDate) html+='</div>';
   box.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════
+//  ESTRUTURAR MINUTA COM IA
+// ═══════════════════════════════════════════
+function voltarEditor(){
+  document.getElementById('minutaEstrutView').style.display='none';
+  document.getElementById('minutaEditorView').style.display='flex';
+}
+
+function salvarEstruturada(){
+  const m = minutas.find(m=>m.id===editingMinutaId);
+  if(!m) return;
+  // Converte o HTML estruturado de volta para texto legível e salva
+  const html = document.getElementById('minutaEstrutContent').innerHTML;
+  const tmp = document.createElement('div'); tmp.innerHTML=html;
+  m.textoEstruturado = html;
+  m.texto = tmp.innerText || tmp.textContent;
+  saveMinutas(); renderMinuta();
+  alert('Minuta estruturada salva!');
+}
+
+async function estruturarMinuta(){
+  const texto = document.getElementById('minutaFsText').value.trim();
+  if(!texto || texto.length < 30){
+    alert('A minuta está vazia ou muito curta para estruturar.');
+    return;
+  }
+  const titulo = document.getElementById('minutaFsTitle').textContent;
+  const data   = document.getElementById('minutaFsDate').textContent;
+
+  // Mostra loading
+  const loading = document.getElementById('estruturLoading');
+  loading.style.display='flex';
+  const msgs = ['Analisando transcrição…','Identificando tópicos…','Organizando decisões…','Formatando minuta…'];
+  let mi=0;
+  const msgEl = document.getElementById('estruturLoadingMsg');
+  const msgInt = setInterval(()=>{ msgEl.textContent=msgs[mi=(mi+1)%msgs.length]; },1800);
+
+  try {
+    const prompt = `Você é um assistente especializado em organizar minutas de reunião.
+
+Abaixo está a transcrição bruta de uma reunião chamada "${titulo}" realizada em ${data}.
+
+Organize esta transcrição em uma minuta estruturada em português brasileiro com:
+1. **RESUMO EXECUTIVO** — 2 a 3 frases resumindo o que foi discutido
+2. **TÓPICOS DISCUTIDOS** — lista dos principais assuntos abordados, em ordem cronológica
+3. **DECISÕES TOMADAS** — cada decisão em um item separado
+4. **AÇÕES E RESPONSABILIDADES** — o que precisa ser feito, por quem (se mencionado) e prazo (se mencionado)
+5. **PRÓXIMOS PASSOS** — encaminhamentos gerais
+
+Responda APENAS com um JSON no formato abaixo, sem texto fora do JSON:
+{
+  "resumo": "texto do resumo",
+  "topicos": ["tópico 1", "tópico 2"],
+  "decisoes": ["decisão 1", "decisão 2"],
+  "acoes": [{"acao": "descrição", "responsavel": "nome ou vazio", "prazo": "prazo ou vazio"}],
+  "proximosPassos": ["passo 1", "passo 2"]
+}
+
+TRANSCRIÇÃO:
+${texto}`;
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if(!resp.ok) throw new Error('Erro na API: ' + resp.status);
+    const data2 = await resp.json();
+    const raw   = data2.content?.find(c=>c.type==='text')?.text || '';
+
+    // Parse JSON — remove possíveis backticks
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const obj   = JSON.parse(clean);
+
+    clearInterval(msgInt);
+    loading.style.display='none';
+    renderEstruturada(obj, titulo, data);
+
+  } catch(e) {
+    clearInterval(msgInt);
+    loading.style.display='none';
+    console.error(e);
+    alert('Erro ao estruturar: ' + e.message + '\n\nVerifique sua conexão e tente novamente.');
+  }
+}
+
+function renderEstruturada(obj, titulo, dataStr){
+  let html = `
+    <div style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:.7rem;color:#666;margin-bottom:4px">${dataStr}</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#fff">${titulo}</div>
+    </div>`;
+
+  // Resumo
+  html+=`<div class="me-section">
+    <h2>📋 Resumo Executivo</h2>
+    <p style="color:#ccc;font-size:.9rem;line-height:1.7">${obj.resumo||'—'}</p>
+  </div>`;
+
+  // Tópicos
+  if(obj.topicos?.length){
+    html+=`<div class="me-section"><h2>💬 Tópicos Discutidos</h2>`;
+    obj.topicos.forEach((t,i)=>{
+      html+=`<div class="me-item"><span class="me-item-dot">${i+1}.</span><span class="me-item-text">${t}</span></div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // Decisões
+  if(obj.decisoes?.length){
+    html+=`<div class="me-section"><h2>✅ Decisões Tomadas</h2>`;
+    obj.decisoes.forEach(d=>{
+      html+=`<div class="me-decisao"><strong>Decisão</strong>${d}</div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // Ações
+  if(obj.acoes?.length){
+    html+=`<div class="me-section"><h2>⚡ Ações e Responsabilidades</h2>`;
+    obj.acoes.forEach(a=>{
+      const resp  = a.responsavel ? ` · <span style="color:var(--accent)">${a.responsavel}</span>` : '';
+      const prazo = a.prazo       ? ` · <span style="color:var(--orange)">${a.prazo}</span>`       : '';
+      html+=`<div class="me-acao"><strong>Ação${resp}${prazo}</strong>${a.acao}</div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // Próximos passos
+  if(obj.proximosPassos?.length){
+    html+=`<div class="me-section"><h2>🚀 Próximos Passos</h2>`;
+    obj.proximosPassos.forEach(p=>{
+      html+=`<div class="me-item"><span class="me-item-dot">→</span><span class="me-item-text">${p}</span></div>`;
+    });
+    html+=`</div>`;
+  }
+
+  document.getElementById('minutaEstrutContent').innerHTML = html;
+  document.getElementById('minutaEditorView').style.display='none';
+  document.getElementById('minutaEstrutView').style.display='flex';
 }
 
 // ═══════════════════════════════════════════
