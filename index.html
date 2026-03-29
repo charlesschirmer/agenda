@@ -330,17 +330,34 @@
 
 <!-- MINUTA FULLSCREEN -->
 <div id="minutaFullscreen" style="display:none;position:fixed;inset:0;background:#0f1117;z-index:500;flex-direction:column;">
-  <div style="background:#1a1d27;border-bottom:1px solid #2e334d;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+  <!-- HEADER -->
+  <div style="background:#1a1d27;border-bottom:1px solid #2e334d;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
     <div style="min-width:0">
       <div style="font-size:.72rem;color:var(--orange);margin-bottom:2px">Minuta</div>
-      <div style="font-size:.95rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis" id="minutaFsTitle"></div>
-      <div style="font-size:.72rem;color:#666;margin-top:1px" id="minutaFsDate"></div>
+      <div style="font-size:.9rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis" id="minutaFsTitle"></div>
+      <div style="font-size:.7rem;color:#666;margin-top:1px" id="minutaFsDate"></div>
     </div>
-    <div style="display:flex;gap:8px;flex-shrink:0">
+    <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">
+      <button class="btn btn-sm" id="btnGravar" onclick="toggleGravacao()"
+        style="background:rgba(247,111,111,.15);color:var(--red);border:1px solid rgba(247,111,111,.3)">
+        🎤 Gravar
+      </button>
       <button class="btn btn-primary btn-sm" onclick="saveMinutaFs()">💾 Salvar</button>
       <button class="btn btn-ghost btn-sm" onclick="closeMinutaFs()">✕ Fechar</button>
     </div>
   </div>
+
+  <!-- STATUS GRAVAÇÃO -->
+  <div id="gravarStatus" style="display:none;background:rgba(247,111,111,.08);border-bottom:1px solid rgba(247,111,111,.2);padding:8px 16px;display:none;align-items:center;gap:10px;">
+    <div style="width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1s infinite;flex-shrink:0"></div>
+    <span style="font-size:.78rem;color:var(--red);font-weight:500">Gravando — fale agora</span>
+    <span style="font-size:.72rem;color:#666;margin-left:auto" id="gravarTimer">00:00</span>
+  </div>
+
+  <!-- TEXTO EM RECONHECIMENTO (interim) -->
+  <div id="interimText" style="display:none;padding:8px 18px;font-size:.85rem;color:#666;font-style:italic;background:#0f1117;border-bottom:1px solid #1a1d27;min-height:32px;"></div>
+
+  <!-- TEXTAREA PRINCIPAL -->
   <textarea id="minutaFsText"
     style="flex:1;width:100%;background:#0f1117;border:none;outline:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.8;padding:20px 18px;resize:none;"></textarea>
 </div>
@@ -1066,6 +1083,7 @@ function saveMinutaFs(){
 }
 
 function closeMinutaFs(){
+  if(gravando) pararGravacao();
   // Auto-salva ao fechar
   const m = minutas.find(m=>m.id===editingMinutaId);
   if(m) {
@@ -1120,6 +1138,119 @@ function renderMinuta(){
   });
   if(lastDate) html+='</div>';
   box.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════
+//  TRANSCRIÇÃO DE VOZ
+// ═══════════════════════════════════════════
+let recognition   = null;
+let gravando      = false;
+let timerInterval = null;
+let timerSecs     = 0;
+let textoConfirmado = ''; // texto já confirmado pela API
+
+function toggleGravacao(){
+  if(gravando) pararGravacao();
+  else         iniciarGravacao();
+}
+
+function iniciarGravacao(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    alert('Seu navegador não suporta transcrição de voz.\nUse o Chrome no Android ou no computador.');
+    return;
+  }
+  recognition = new SR();
+  recognition.lang = 'pt-BR';
+  recognition.continuous     = true;  // não para depois de uma pausa
+  recognition.interimResults = true;  // mostra texto enquanto fala
+
+  recognition.onstart = () => {
+    gravando = true;
+    textoConfirmado = document.getElementById('minutaFsText').value;
+    // Garante que começa numa nova linha se já tiver conteúdo
+    if(textoConfirmado && !textoConfirmado.endsWith('\n')) textoConfirmado += '\n';
+    atualizarBotaoGravar();
+    document.getElementById('gravarStatus').style.display = 'flex';
+    document.getElementById('interimText').style.display  = 'block';
+    iniciarTimer();
+  };
+
+  recognition.onresult = (e) => {
+    let interim = '';
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const transcript = e.results[i][0].transcript;
+      if(e.results[i].isFinal){
+        textoConfirmado += transcript + ' ';
+        document.getElementById('minutaFsText').value = textoConfirmado;
+        // Scroll para o fim
+        const ta = document.getElementById('minutaFsText');
+        ta.scrollTop = ta.scrollHeight;
+      } else {
+        interim += transcript;
+      }
+    }
+    document.getElementById('interimText').textContent = interim ? '🎤 ' + interim : '';
+  };
+
+  recognition.onerror = (e) => {
+    if(e.error === 'no-speech') return; // ignora silêncio
+    if(e.error === 'aborted')   return;
+    alert('Erro na gravação: ' + e.error);
+    pararGravacao();
+  };
+
+  recognition.onend = () => {
+    // Se ainda deveria estar gravando, reinicia automaticamente
+    // (evita que o browser pare após silêncio)
+    if(gravando) recognition.start();
+  };
+
+  recognition.start();
+}
+
+function pararGravacao(){
+  gravando = false;
+  if(recognition){ recognition.abort(); recognition = null; }
+  clearInterval(timerInterval); timerInterval = null; timerSecs = 0;
+  document.getElementById('gravarStatus').style.display = 'none';
+  document.getElementById('interimText').style.display  = 'none';
+  document.getElementById('interimText').textContent    = '';
+  document.getElementById('gravarTimer').textContent    = '00:00';
+  atualizarBotaoGravar();
+  // Auto-salva após parar
+  const m = minutas.find(m=>m.id===editingMinutaId);
+  if(m){
+    m.texto = document.getElementById('minutaFsText').value;
+    saveMinutas();
+    renderMinuta();
+  }
+}
+
+function atualizarBotaoGravar(){
+  const btn = document.getElementById('btnGravar');
+  if(!btn) return;
+  if(gravando){
+    btn.textContent = '⏹ Parar';
+    btn.style.background = 'rgba(247,111,111,.3)';
+    btn.style.color      = '#fff';
+  } else {
+    btn.textContent = '🎤 Gravar';
+    btn.style.background = 'rgba(247,111,111,.15)';
+    btn.style.color      = 'var(--red)';
+  }
+}
+
+function iniciarTimer(){
+  timerSecs = 0;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    timerSecs++;
+    const m = String(Math.floor(timerSecs/60)).padStart(2,'0');
+    const s = String(timerSecs%60).padStart(2,'0');
+    const el = document.getElementById('gravarTimer');
+    if(el) el.textContent = `${m}:${s}`;
+  }, 1000);
 }
 
 function expandPauta(){
