@@ -1219,66 +1219,83 @@ async function estruturarMinuta(){
   const titulo = document.getElementById('minutaFsTitle').textContent;
   const data   = document.getElementById('minutaFsDate').textContent;
 
-  // Mostra loading
   const loading = document.getElementById('estruturLoading');
   loading.style.display='flex';
-  const msgs = ['Analisando transcrição…','Identificando tópicos…','Organizando decisões…','Formatando minuta…'];
+  const msgs=['Analisando transcrição…','Identificando tópicos…','Organizando decisões…','Formatando minuta…'];
   let mi=0;
   const msgEl = document.getElementById('estruturLoadingMsg');
-  const msgInt = setInterval(()=>{ msgEl.textContent=msgs[mi=(mi+1)%msgs.length]; },1800);
+  const msgInt = setInterval(()=>{ msgEl.textContent=msgs[mi=(mi+1)%msgs.length]; },900);
+
+  // Pequeno delay para dar sensação de processamento
+  await new Promise(r=>setTimeout(r,2000));
 
   try {
-    const prompt = `Você é um assistente especializado em organizar minutas de reunião.
-
-Abaixo está a transcrição bruta de uma reunião chamada "${titulo}" realizada em ${data}.
-
-Organize esta transcrição em uma minuta estruturada em português brasileiro com:
-1. **RESUMO EXECUTIVO** — 2 a 3 frases resumindo o que foi discutido
-2. **TÓPICOS DISCUTIDOS** — lista dos principais assuntos abordados, em ordem cronológica
-3. **DECISÕES TOMADAS** — cada decisão em um item separado
-4. **AÇÕES E RESPONSABILIDADES** — o que precisa ser feito, por quem (se mencionado) e prazo (se mencionado)
-5. **PRÓXIMOS PASSOS** — encaminhamentos gerais
-
-Responda APENAS com um JSON no formato abaixo, sem texto fora do JSON:
-{
-  "resumo": "texto do resumo",
-  "topicos": ["tópico 1", "tópico 2"],
-  "decisoes": ["decisão 1", "decisão 2"],
-  "acoes": [{"acao": "descrição", "responsavel": "nome ou vazio", "prazo": "prazo ou vazio"}],
-  "proximosPassos": ["passo 1", "passo 2"]
-}
-
-TRANSCRIÇÃO:
-${texto}`;
-
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if(!resp.ok) throw new Error('Erro na API: ' + resp.status);
-    const data2 = await resp.json();
-    const raw   = data2.content?.find(c=>c.type==='text')?.text || '';
-
-    // Parse JSON — remove possíveis backticks
-    const clean = raw.replace(/```json|```/g,'').trim();
-    const obj   = JSON.parse(clean);
-
+    const obj = processarTextoMinuta(texto);
     clearInterval(msgInt);
     loading.style.display='none';
     renderEstruturada(obj, titulo, data);
-
   } catch(e) {
     clearInterval(msgInt);
     loading.style.display='none';
-    console.error(e);
-    alert('Erro ao estruturar: ' + e.message + '\n\nVerifique sua conexão e tente novamente.');
+    alert('Erro ao processar: ' + e.message);
   }
+}
+
+// Processamento local inteligente do texto da minuta
+function processarTextoMinuta(texto){
+  const frases = texto
+    .split(/[.!?\n]+/)
+    .map(f=>f.trim())
+    .filter(f=>f.length>8);
+
+  // Palavras-chave para identificar padrões
+  const kwDecisao  = /\b(decidi|decidimos|ficou|ficamos|aprovad|será|vamos|vai|acordo|definid|resolv)/i;
+  const kwAcao     = /\b(precisa|precisamos|devemos|deve|fazer|verificar|enviar|criar|agendar|contatar|ligar|revisar|encaminhar|providenciar)/i;
+  const kwProximo  = /\b(próxim|semana que vem|amanhã|segunda|terça|quarta|quinta|sexta|reunião|follow)/i;
+  const kwNome     = /\b([A-Z][a-záàâãéêíóôõúç]+)\s+(vai|irá|deve|ficou|será|precisa)/;
+
+  const decisoes     = [];
+  const acoes        = [];
+  const proximosPassos = [];
+  const topicos      = [];
+  const vistos       = new Set();
+
+  frases.forEach(f => {
+    if(vistos.has(f)) return;
+    vistos.add(f);
+    if(kwDecisao.test(f)  && f.length>15) decisoes.push(f);
+    else if(kwAcao.test(f) && f.length>15){
+      const mNome = f.match(kwNome);
+      acoes.push({ acao:f, responsavel: mNome?mNome[1]:'', prazo:'' });
+    }
+    else if(kwProximo.test(f) && f.length>15) proximosPassos.push(f);
+    else if(f.length>20) topicos.push(f);
+  });
+
+  // Resumo: primeiras 2 frases longas
+  const longFrases = frases.filter(f=>f.length>30);
+  const resumo = longFrases.slice(0,2).join('. ') + (longFrases.length>2 ? '.' : '');
+
+  // Limita quantidades
+  return {
+    resumo:          resumo || texto.slice(0,200),
+    topicos:         deduplicar(topicos).slice(0,8),
+    decisoes:        deduplicar(decisoes).slice(0,6),
+    acoes:           acoes.slice(0,6),
+    proximosPassos:  deduplicar(proximosPassos).slice(0,5),
+  };
+}
+
+function deduplicar(arr){
+  // Remove frases muito parecidas (>70% de palavras em comum)
+  return arr.filter((f,i)=>{
+    const palavrasF = new Set(f.toLowerCase().split(/\s+/));
+    return !arr.slice(0,i).some(g=>{
+      const palavrasG = new Set(g.toLowerCase().split(/\s+/));
+      const intersect = [...palavrasF].filter(p=>palavrasG.has(p)).length;
+      return intersect/Math.max(palavrasF.size,palavrasG.size) > 0.7;
+    });
+  });
 }
 
 function renderEstruturada(obj, titulo, dataStr){
@@ -1357,16 +1374,20 @@ function iniciarGravacao(){
     alert('Seu navegador não suporta transcrição de voz.\nUse o Chrome no Android ou no computador.');
     return;
   }
+
+  // Captura o texto já existente ANTES de começar
+  const textoAntes = document.getElementById('minutaFsText').value;
+  textoConfirmado  = textoAntes + (textoAntes && !textoAntes.endsWith('\n') ? '\n' : '');
+
   recognition = new SR();
-  recognition.lang = 'pt-BR';
-  recognition.continuous     = true;  // não para depois de uma pausa
-  recognition.interimResults = true;  // mostra texto enquanto fala
+  recognition.lang           = 'pt-BR';
+  recognition.continuous     = true;
+  recognition.interimResults = true;
+  let reiniciando = false; // flag para evitar duplo onstart
 
   recognition.onstart = () => {
+    if(reiniciando){ reiniciando=false; return; } // ignora reinício automático
     gravando = true;
-    textoConfirmado = document.getElementById('minutaFsText').value;
-    // Garante que começa numa nova linha se já tiver conteúdo
-    if(textoConfirmado && !textoConfirmado.endsWith('\n')) textoConfirmado += '\n';
     atualizarBotaoGravar();
     document.getElementById('gravarStatus').style.display = 'flex';
     document.getElementById('interimText').style.display  = 'block';
@@ -1375,32 +1396,33 @@ function iniciarGravacao(){
 
   recognition.onresult = (e) => {
     let interim = '';
+    // Percorre apenas os resultados NOVOS (a partir de resultIndex)
     for(let i = e.resultIndex; i < e.results.length; i++){
       const transcript = e.results[i][0].transcript;
       if(e.results[i].isFinal){
-        textoConfirmado += transcript + ' ';
+        // Adiciona ponto final se a frase não terminar com pontuação
+        const frase = transcript.trim();
+        const temPontuacao = /[.!?]$/.test(frase);
+        textoConfirmado += frase + (temPontuacao ? ' ' : '. ');
         document.getElementById('minutaFsText').value = textoConfirmado;
-        // Scroll para o fim
         const ta = document.getElementById('minutaFsText');
         ta.scrollTop = ta.scrollHeight;
+        document.getElementById('interimText').textContent = '';
       } else {
         interim += transcript;
       }
     }
-    document.getElementById('interimText').textContent = interim ? '🎤 ' + interim : '';
+    if(interim) document.getElementById('interimText').textContent = '🎤 ' + interim;
   };
 
   recognition.onerror = (e) => {
-    if(e.error === 'no-speech') return; // ignora silêncio
-    if(e.error === 'aborted')   return;
-    alert('Erro na gravação: ' + e.error);
+    if(e.error==='no-speech' || e.error==='aborted') return;
+    console.warn('Speech error:', e.error);
     pararGravacao();
   };
 
   recognition.onend = () => {
-    // Se ainda deveria estar gravando, reinicia automaticamente
-    // (evita que o browser pare após silêncio)
-    if(gravando) recognition.start();
+    if(gravando){ reiniciando=true; recognition.start(); } // reinício silencioso
   };
 
   recognition.start();
