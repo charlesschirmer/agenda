@@ -8,25 +8,37 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
+  /* ── TEMA ESCURO (padrão) ── */
   :root {
     --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a; --border:#2e334d;
     --accent:#4f8ef7; --green:#3ecf8e; --orange:#f7934f; --red:#f76f6f;
+    --text:#ffffff; --text2:#cccccc; --text3:#888888; --text4:#555555;
     --radius:12px;
+    --shadow:0 2px 12px rgba(0,0,0,.3);
   }
+
+  /* ── TEMA CLARO ── */
+  body.light {
+    --bg:#f0f2f7; --surface:#ffffff; --surface2:#f0f2f7; --border:#d8dce8;
+    --accent:#3b7ef0; --green:#27a870; --orange:#e07c32; --red:#e05555;
+    --text:#1a1d2e; --text2:#444860; --text3:#7a7f9a; --text4:#b0b5cc;
+    --shadow:0 2px 12px rgba(0,0,0,.1);
+  }
+
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#fff;min-height:100vh;overflow-x:hidden;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .25s,color .25s;}
 
   .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:10px;}
-  .topbar h1{font-size:1.05rem;font-weight:600;color:#fff;white-space:nowrap;}
+  .topbar h1{font-size:1.05rem;font-weight:600;color:var(--text);white-space:nowrap;}
   .topbar h1 span{color:var(--accent);}
   .topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-  .topbar-date{font-family:'DM Mono',monospace;font-size:.7rem;color:#fff;text-align:right;line-height:1.4;}
+  .topbar-date{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text);text-align:right;line-height:1.4;}
 
   .sync-badge{font-size:.68rem;font-weight:600;border-radius:20px;padding:3px 9px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;cursor:pointer;user-select:none;}
   .sync-badge.ok  {background:rgba(62,207,142,.15);color:var(--green);border:1px solid rgba(62,207,142,.3);}
   .sync-badge.err {background:rgba(247,111,111,.15);color:var(--red);border:1px solid rgba(247,111,111,.3);}
   .sync-badge.busy{background:rgba(79,142,247,.15);color:var(--accent);border:1px solid rgba(79,142,247,.3);}
-  .sync-badge.off {background:rgba(255,255,255,.08);color:#888;border:1px solid var(--border);}
+  .sync-badge.off {background:rgba(255,255,255,.08);color:var(--text3);border:1px solid var(--border);}
   .sync-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}.sync-dot.blinking{animation:blink .7s infinite;}
 
@@ -34,20 +46,20 @@
   .tabs::-webkit-scrollbar{display:none;}
   .tab{padding:11px 16px;font-size:.82rem;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;}
   .tab:hover{color:rgba(255,255,255,.85);}
-  .tab.active{color:#fff;border-bottom-color:var(--accent);}
+  .tab.active{color:var(--text);border-bottom-color:var(--accent);}
 
   .main{padding:16px 14px 100px;max-width:700px;margin:0 auto;}
 
   .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;}
-  .section-title{font-size:.95rem;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;}
-  .badge{font-size:.68rem;font-weight:600;background:var(--accent);color:#fff;border-radius:20px;padding:2px 8px;}
+  .section-title{font-size:.95rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .badge{font-size:.68rem;font-weight:600;background:var(--accent);color:var(--text);border-radius:20px;padding:2px 8px;}
   .badge.orange{background:var(--orange);}
 
   .btn{padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
-  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary{background:var(--accent);color:var(--text);}
   .btn-primary:hover{background:#6fa0ff;}
-  .btn-ghost{background:transparent;color:#fff;border:1px solid var(--border);}
-  .btn-ghost:hover{border-color:#fff;}
+  .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border);}
+  .btn-ghost:hover{border-color:var(--text);}
   .btn-success{background:rgba(62,207,142,.15);color:var(--green);border:1px solid rgba(62,207,142,.3);}
   .btn-success:hover{background:rgba(62,207,142,.25);}
   .btn-danger{background:transparent;color:var(--red);border:1px solid transparent;}
@@ -56,59 +68,59 @@
   .btn-icon{padding:6px;border-radius:6px;line-height:1;}
 
   .event-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;transition:border-color .2s;}
-  .event-card:hover{border-color:#fff3;}
+  .event-card:hover{border-color:var(--border);}
   .event-card.current{border-left:3px solid var(--accent);}
-  .event-time{font-family:'DM Mono',monospace;font-size:.72rem;color:#fff;white-space:nowrap;min-width:88px;padding-top:2px;}
-  .event-time .tr{display:block;font-size:.76rem;color:#fff;font-weight:600;}
+  .event-time{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text);white-space:nowrap;min-width:88px;padding-top:2px;}
+  .event-time .tr{display:block;font-size:.76rem;color:var(--text);font-weight:600;}
   .event-body{flex:1;min-width:0;}
-  .event-title{font-size:.88rem;font-weight:500;color:#fff;line-height:1.35;}
+  .event-title{font-size:.88rem;font-weight:500;color:var(--text);line-height:1.35;}
   .event-actions{display:flex;gap:2px;opacity:0;transition:opacity .15s;}
   .event-card:hover .event-actions{opacity:1;}
 
   /* template card — visual diferente */
   .tpl-card{background:var(--surface2);border:1px dashed var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:6px;display:flex;gap:12px;align-items:center;}
-  .tpl-time{font-family:'DM Mono',monospace;font-size:.72rem;color:#888;white-space:nowrap;min-width:88px;}
-  .tpl-time .tr{display:block;font-size:.76rem;color:#aaa;font-weight:600;}
+  .tpl-time{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text3);white-space:nowrap;min-width:88px;}
+  .tpl-time .tr{display:block;font-size:.76rem;color:var(--text3);font-weight:600;}
   .tpl-body{flex:1;min-width:0;}
-  .tpl-title{font-size:.85rem;color:#ccc;line-height:1.3;}
+  .tpl-title{font-size:.85rem;color:var(--text2);line-height:1.3;}
   .tpl-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
   .tpl-card:hover .tpl-actions{opacity:1;}
 
   .day-block{margin-bottom:26px;}
-  .day-label{font-size:.76rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-  .day-sub{font-size:.72rem;color:#666;font-weight:400;text-transform:none;letter-spacing:0;}
-  .day-today-pill{font-size:.65rem;background:var(--accent);color:#fff;border-radius:20px;padding:2px 8px;text-transform:none;letter-spacing:0;font-weight:600;}
+  .day-label{font-size:.76rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .day-sub{font-size:.72rem;color:var(--text4);font-weight:400;text-transform:none;letter-spacing:0;}
+  .day-today-pill{font-size:.65rem;background:var(--accent);color:var(--text);border-radius:20px;padding:2px 8px;text-transform:none;letter-spacing:0;font-weight:600;}
 
-  .empty{text-align:center;padding:36px 20px;color:#555;font-size:.85rem;}
+  .empty{text-align:center;padding:36px 20px;color:var(--text4);font-size:.85rem;}
 
   .task-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:11px;transition:border-color .2s;}
-  .task-item:hover{border-color:#fff3;}
+  .task-item:hover{border-color:var(--border);}
   .task-item.done{opacity:.5;}
   .task-check{width:18px;height:18px;border:2px solid var(--border);border-radius:5px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s;background:none;}
   .task-item.done .task-check{background:var(--green);border-color:var(--green);}
-  .task-title{font-size:.88rem;color:#fff;line-height:1.35;flex:1;}
-  .task-item.done .task-title{text-decoration:line-through;color:#555;}
+  .task-title{font-size:.88rem;color:var(--text);line-height:1.35;flex:1;}
+  .task-item.done .task-title{text-decoration:line-through;color:var(--text4);}
   .task-actions{display:flex;gap:2px;opacity:0;transition:opacity .15s;}
   .task-item:hover .task-actions{opacity:1;}
 
-  .current-slot{background:linear-gradient(135deg,rgba(79,142,247,.12),rgba(124,106,247,.08));border:1px solid rgba(79,142,247,.3);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;font-size:.84rem;color:#fff;display:flex;align-items:center;gap:10px;}
+  .current-slot{background:linear-gradient(135deg,rgba(79,142,247,.12),rgba(124,106,247,.08));border:1px solid rgba(79,142,247,.3);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;font-size:.84rem;color:var(--text);display:flex;align-items:center;gap:10px;}
   .current-slot .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite;flex-shrink:0;}
   @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
 
   .view-toggle{display:flex;gap:4px;background:var(--surface2);border-radius:8px;padding:3px;}
-  .view-btn{padding:5px 11px;border-radius:6px;font-size:.78rem;font-weight:500;cursor:pointer;border:none;background:none;color:#888;font-family:'DM Sans',sans-serif;transition:all .15s;}
-  .view-btn.active{background:var(--surface);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+  .view-btn{padding:5px 11px;border-radius:6px;font-size:.78rem;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text3);font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .view-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3);}
 
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
   .modal-overlay.open{opacity:1;pointer-events:all;}
   .modal{background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 0 0;width:100%;max-width:700px;padding:22px 18px 36px;transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);max-height:92vh;overflow-y:auto;}
   .modal-overlay.open .modal{transform:translateY(0);}
   .modal-handle{width:40px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 18px;}
-  .modal h2{font-size:1rem;font-weight:600;margin-bottom:16px;color:#fff;}
+  .modal h2{font-size:1rem;font-weight:600;margin-bottom:16px;color:var(--text);}
 
   .form-group{margin-bottom:13px;}
-  .form-label{display:block;font-size:.78rem;color:#888;margin-bottom:5px;font-weight:500;}
-  .form-input,.form-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:#fff;outline:none;transition:border-color .15s;}
+  .form-label{display:block;font-size:.78rem;color:var(--text3);margin-bottom:5px;font-weight:500;}
+  .form-input,.form-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);outline:none;transition:border-color .15s;}
   .form-input:focus,.form-select:focus{border-color:var(--accent);}
   .form-select option{background:var(--surface2);}
   .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -116,48 +128,48 @@
   .form-actions .btn{flex:1;justify-content:center;}
 
   /* apply banner */
-  .apply-banner{background:rgba(62,207,142,.07);border:1px solid rgba(62,207,142,.2);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:.78rem;color:#aaa;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .apply-banner{background:rgba(62,207,142,.07);border:1px solid rgba(62,207,142,.2);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:.78rem;color:var(--text3);display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .apply-banner span{line-height:1.4;}
 
   /* sync page */
   .sync-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;}
-  .sync-card h3{font-size:.9rem;font-weight:600;color:#fff;margin-bottom:10px;}
-  .sync-card p,.sync-card li{font-size:.82rem;color:#999;line-height:1.6;}
+  .sync-card h3{font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:10px;}
+  .sync-card p,.sync-card li{font-size:.82rem;color:var(--text3);line-height:1.6;}
   .sync-card ol{padding-left:18px;margin-bottom:14px;}
   .sync-card a{color:var(--accent);text-decoration:none;}
-  .sync-card code{background:var(--surface2);border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace;font-size:.78rem;color:#fff;}
+  .sync-card code{background:var(--surface2);border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--text);}
   .connected-box{background:rgba(62,207,142,.08);border:1px solid rgba(62,207,142,.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.82rem;color:var(--green);}
-  .mono-sm{font-family:'DM Mono',monospace;font-size:.74rem;color:#555;word-break:break-all;margin-top:3px;}
-  .sync-log{font-size:.74rem;color:#555;font-family:'DM Mono',monospace;line-height:1.7;max-height:130px;overflow-y:auto;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+  .mono-sm{font-family:'DM Mono',monospace;font-size:.74rem;color:var(--text4);word-break:break-all;margin-top:3px;}
+  .sync-log{font-size:.74rem;color:var(--text4);font-family:'DM Mono',monospace;line-height:1.7;max-height:130px;overflow-y:auto;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 
   /* CALENDAR */
   .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-  .cal-nav-title{font-size:1rem;font-weight:600;color:#fff;}
+  .cal-nav-title{font-size:1rem;font-weight:600;color:var(--text);}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-  .cal-dow{text-align:center;font-size:.68rem;font-weight:600;color:#666;padding:4px 0;text-transform:uppercase;}
+  .cal-dow{text-align:center;font-size:.68rem;font-weight:600;color:var(--text4);padding:4px 0;text-transform:uppercase;}
   .cal-cell{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .15s;gap:2px;}
   .cal-cell:hover{background:var(--surface2);}
-  .cal-cell.today{background:var(--accent);color:#fff;}
-  .cal-cell.today .cal-num{color:#fff;font-weight:700;}
+  .cal-cell.today{background:var(--accent);color:var(--text);}
+  .cal-cell.today .cal-num{color:var(--text);font-weight:700;}
   .cal-cell.has-events .cal-dot{display:block;}
-  .cal-cell.other-month .cal-num{color:#444;}
+  .cal-cell.other-month .cal-num{color:var(--text3);}
   .cal-cell.selected{background:var(--surface2);border:1px solid var(--accent);}
-  .cal-num{font-size:.82rem;font-weight:500;color:#fff;line-height:1;}
+  .cal-num{font-size:.82rem;font-weight:500;color:var(--text);line-height:1;}
   .cal-dot{display:none;width:4px;height:4px;border-radius:50%;background:var(--orange);}
-  .cal-cell.today .cal-dot{background:#fff;}
+  .cal-cell.today .cal-dot{background:var(--text);}
 
   /* DAY DETAIL (month view) */
   .day-detail{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-top:14px;}
   .day-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-  .day-detail-title{font-size:.88rem;font-weight:600;color:#fff;}
+  .day-detail-title{font-size:.88rem;font-weight:600;color:var(--text);}
 
   /* MINUTA */
   .minuta-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .2s;display:flex;align-items:center;gap:12px;}
   .minuta-item:hover{border-color:var(--accent);}
   .minuta-item-date{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--accent);white-space:nowrap;min-width:52px;}
   .minuta-item-body{flex:1;min-width:0;}
-  .minuta-item-title{font-size:.88rem;font-weight:500;color:#fff;line-height:1.3;}
-  .minuta-item-sub{font-size:.72rem;color:#666;margin-top:2px;}
+  .minuta-item-title{font-size:.88rem;font-weight:500;color:var(--text);line-height:1.3;}
+  .minuta-item-sub{font-size:.72rem;color:var(--text4);margin-top:2px;}
   .minuta-item-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
   .minuta-item:hover .minuta-item-actions{opacity:1;}
 
@@ -166,14 +178,43 @@
   /* MINUTA ESTRUTURADA */
   .me-section{margin-bottom:22px;}
   .me-section h2{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
-  .me-section h3{font-size:.88rem;font-weight:600;color:#fff;margin:12px 0 4px;}
+  .me-section h3{font-size:.88rem;font-weight:600;color:var(--text);margin:12px 0 4px;}
   .me-item{display:flex;gap:10px;margin-bottom:6px;font-size:.88rem;line-height:1.5;}
   .me-item-dot{color:var(--accent);flex-shrink:0;margin-top:2px;}
-  .me-item-text{color:#ddd;}
-  .me-decisao{background:rgba(62,207,142,.07);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:6px;font-size:.86rem;color:#ccc;}
+  .me-item-text{color:var(--text2);}
+  .me-decisao{background:rgba(62,207,142,.07);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:6px;font-size:.86rem;color:var(--text2);}
   .me-decisao strong{color:var(--green);display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
-  .me-acao{background:rgba(247,147,79,.07);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:6px;font-size:.86rem;color:#ccc;}
+  .me-acao{background:rgba(247,147,79,.07);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:6px;font-size:.86rem;color:var(--text2);}
   .me-acao strong{color:var(--orange);display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+
+  /* ── OVERRIDES TEMA CLARO ── */
+  body.light .topbar { box-shadow: 0 1px 8px rgba(0,0,0,.08); }
+  body.light .tab { color: rgba(0,0,0,.4); }
+  body.light .tab:hover { color: rgba(0,0,0,.7); }
+  body.light .tab.active { color: var(--accent); }
+  body.light .modal { box-shadow: 0 -4px 32px rgba(0,0,0,.12); }
+  body.light .event-card { box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  body.light .task-item { box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  body.light .sync-badge.off { color: var(--text3); }
+  body.light .week-divider { color: var(--accent); }
+  body.light .cal-num { color: var(--text); }
+  body.light .cal-cell.today .cal-num { color: #fff; }
+  body.light .cal-cell.other-month .cal-num { color: var(--text4); }
+  body.light #pautaFullscreen,
+  body.light #minutaFullscreen { background: var(--bg); }
+  body.light #minutaFsText,
+  body.light #pautaFsText { background: var(--bg); color: var(--text); }
+  body.light .tpl-card { background: var(--surface2); }
+  body.light .tpl-title { color: var(--text2); }
+  body.light .tpl-time .tr,
+  body.light .tpl-time { color: var(--text3); }
+  body.light .day-label { color: var(--text); }
+  body.light .me-item-text { color: var(--text2); }
+  body.light .me-decisao,
+  body.light .me-acao { color: var(--text2); }
+  body.light .minuta-item-sub { color: var(--text3); }
+  body.light .sync-log { color: var(--text3); }
+  body.light .mono-sm { color: var(--text3); }
 
   /* WEEK SECTION DIVIDER */
   .week-divider{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
@@ -202,7 +243,7 @@
   <button class="tab" onclick="showPage('tarefas')">Tarefas</button>
   <button class="tab" onclick="showPage('minuta')">Minuta</button>
   <button class="tab" onclick="showPage('template')">Template</button>
-  <button class="tab" onclick="showPage('sync')">⇄ Sync</button>
+  <button class="tab" onclick="showPage('sync')">⚙️ Config</button>
 </div>
 
 <div class="main">
@@ -258,7 +299,7 @@
     <div class="section-header">
       <div class="section-title">Template Semanal</div>
     </div>
-    <p style="font-size:.8rem;color:#888;margin-bottom:16px;line-height:1.6;">
+    <p style="font-size:.8rem;color:var(--text3);margin-bottom:16px;line-height:1.6;">
       Este é o seu padrão semanal. Clique em <strong style="color:var(--green)">Aplicar na agenda</strong> para copiar um dia do template para a próxima ocorrência desse dia na agenda real. Isso não afeta nada automaticamente.
     </p>
     <div id="templateDays"></div>
@@ -266,13 +307,32 @@
 
   <!-- SYNC -->
   <div id="page-sync" class="page">
-    <div class="section-header"><div class="section-title">⇄ Sincronização</div></div>
+    <div class="section-header"><div class="section-title">⚙️ Configurações</div></div>
+
+    <!-- TEMA -->
+    <div class="sync-card" style="margin-bottom:14px">
+      <h3>🎨 Tema</h3>
+      <p style="margin-bottom:14px">Escolha a aparência do app.</p>
+      <div style="display:flex;gap:10px">
+        <button id="btnTemaEscuro" class="btn btn-sm" onclick="setTema('dark')"
+          style="flex:1;justify-content:center;flex-direction:column;gap:4px;padding:14px;height:auto">
+          <span style="font-size:1.2rem">🌙</span>
+          <span>Escuro</span>
+        </button>
+        <button id="btnTemaClaro" class="btn btn-sm" onclick="setTema('light')"
+          style="flex:1;justify-content:center;flex-direction:column;gap:4px;padding:14px;height:auto">
+          <span style="font-size:1.2rem">☀️</span>
+          <span>Claro</span>
+        </button>
+      </div>
+    </div>
+    <!-- SINCRONIZAÇÃO -->
     <div id="blockConectado" style="display:none">
       <div class="connected-box">✅ Conectado ao GitHub Gist</div>
       <div class="sync-card">
         <h3>Status</h3>
-        <div style="margin-bottom:8px"><span style="font-size:.78rem;color:#888">Token</span><div class="mono-sm" id="showToken"></div></div>
-        <div style="margin-bottom:16px"><span style="font-size:.78rem;color:#888">Gist ID</span><div class="mono-sm" id="showGistId"></div></div>
+        <div style="margin-bottom:8px"><span style="font-size:.78rem;color:var(--text3)">Token</span><div class="mono-sm" id="showToken"></div></div>
+        <div style="margin-bottom:16px"><span style="font-size:.78rem;color:var(--text3)">Gist ID</span><div class="mono-sm" id="showGistId"></div></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-primary btn-sm" onclick="syncPull()">⬇ Receber do Gist</button>
           <button class="btn btn-ghost btn-sm"   onclick="syncPush()">⬆ Enviar ao Gist</button>
@@ -287,17 +347,17 @@
     <div id="blockSetup">
       <div class="sync-card" style="background:rgba(79,142,247,.06);border-color:rgba(79,142,247,.25)">
         <h3>📱 Qual dispositivo é este?</h3>
-        <p><strong style="color:#fff">1º dispositivo (computador):</strong> não marque "Já tenho Gist ID" — cria um Gist novo e envia seus dados.</p>
-        <p style="margin-top:8px"><strong style="color:#fff">2º dispositivo (celular):</strong> marque "Já tenho Gist ID" e cole o ID do computador — recebe os dados.</p>
+        <p><strong style="color:var(--text)">1º dispositivo (computador):</strong> não marque "Já tenho Gist ID" — cria um Gist novo e envia seus dados.</p>
+        <p style="margin-top:8px"><strong style="color:var(--text)">2º dispositivo (celular):</strong> marque "Já tenho Gist ID" e cole o ID do computador — recebe os dados.</p>
       </div>
       <div class="sync-card">
         <h3>Como criar o token</h3>
         <ol>
           <li>Acesse <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a></li>
-          <li>Em <strong style="color:#fff">Note</strong>: <code>agenda-sync</code></li>
-          <li>Em <strong style="color:#fff">Expiration</strong>: <code>No expiration</code></li>
-          <li>Marque <strong style="color:#fff">somente</strong>: <code>gist</code></li>
-          <li>Clique <strong style="color:#fff">Generate token</strong> e copie</li>
+          <li>Em <strong style="color:var(--text)">Note</strong>: <code>agenda-sync</code></li>
+          <li>Em <strong style="color:var(--text)">Expiration</strong>: <code>No expiration</code></li>
+          <li>Marque <strong style="color:var(--text)">somente</strong>: <code>gist</code></li>
+          <li>Clique <strong style="color:var(--text)">Generate token</strong> e copie</li>
         </ol>
       </div>
       <div class="sync-card">
@@ -307,7 +367,7 @@
           <input type="password" class="form-input" id="inToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
         </div>
         <div style="margin-bottom:12px">
-          <label style="font-size:.8rem;color:#888;display:flex;align-items:center;gap:8px;cursor:pointer">
+          <label style="font-size:.8rem;color:var(--text3);display:flex;align-items:center;gap:8px;cursor:pointer">
             <input type="checkbox" id="chkExistente" onchange="toggleExistente()">
             Já tenho um Gist ID (segundo dispositivo)
           </label>
@@ -330,26 +390,26 @@
 </div><!-- /main -->
 
 <!-- PAUTA FULLSCREEN -->
-<div id="pautaFullscreen" style="display:none;position:fixed;inset:0;background:#0f1117;z-index:500;flex-direction:column;">
-  <div style="background:#1a1d27;border-bottom:1px solid #2e334d;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+<div id="pautaFullscreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;flex-direction:column;">
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
     <div style="min-width:0">
-      <div style="font-size:.72rem;color:#888;margin-bottom:2px">Pauta</div>
-      <div style="font-size:.95rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="pautaFsTitle"></div>
+      <div style="font-size:.72rem;color:var(--text3);margin-bottom:2px">Pauta</div>
+      <div style="font-size:.95rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="pautaFsTitle"></div>
     </div>
     <button class="btn btn-ghost btn-sm" onclick="closePauta()" style="flex-shrink:0">✕ Fechar</button>
   </div>
   <textarea id="pautaFsText"
-    style="flex:1;width:100%;background:#0f1117;border:none;outline:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.8;padding:20px 18px;resize:none;"></textarea>
+    style="flex:1;width:100%;background:var(--bg);border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.8;padding:20px 18px;resize:none;"></textarea>
 </div>
 
 <!-- MINUTA FULLSCREEN -->
-<div id="minutaFullscreen" style="display:none;position:fixed;inset:0;background:#0f1117;z-index:500;flex-direction:column;">
+<div id="minutaFullscreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;flex-direction:column;">
   <!-- HEADER -->
-  <div style="background:#1a1d27;border-bottom:1px solid #2e334d;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
     <div style="min-width:0">
       <div style="font-size:.72rem;color:var(--orange);margin-bottom:2px">Minuta</div>
-      <div style="font-size:.9rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis" id="minutaFsTitle"></div>
-      <div style="font-size:.7rem;color:#666;margin-top:1px" id="minutaFsDate"></div>
+      <div style="font-size:.9rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis" id="minutaFsTitle"></div>
+      <div style="font-size:.7rem;color:var(--text4);margin-top:1px" id="minutaFsDate"></div>
     </div>
     <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">
       <button class="btn btn-sm" id="btnGravar" onclick="toggleGravacao()"
@@ -365,11 +425,11 @@
   <div id="gravarStatus" style="display:none;background:rgba(247,111,111,.08);border-bottom:1px solid rgba(247,111,111,.2);padding:8px 16px;align-items:center;gap:10px;">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1s infinite;flex-shrink:0"></div>
     <span style="font-size:.78rem;color:var(--red);font-weight:500">Gravando — fale agora</span>
-    <span style="font-size:.72rem;color:#666;margin-left:auto" id="gravarTimer">00:00</span>
+    <span style="font-size:.72rem;color:var(--text4);margin-left:auto" id="gravarTimer">00:00</span>
   </div>
 
   <!-- TEXTO INTERIM -->
-  <div id="interimText" style="display:none;padding:8px 18px;font-size:.85rem;color:#666;font-style:italic;background:#0f1117;border-bottom:1px solid #1a1d27;min-height:32px;"></div>
+  <div id="interimText" style="display:none;padding:8px 18px;font-size:.85rem;color:var(--text4);font-style:italic;background:var(--bg);border-bottom:1px solid var(--border);min-height:32px;"></div>
 
   <!-- CONTEÚDO: editor OU minuta estruturada -->
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative">
@@ -377,21 +437,21 @@
     <!-- EDITOR (modo padrão) -->
     <div id="minutaEditorView" style="flex:1;display:flex;flex-direction:column;">
       <textarea id="minutaFsText"
-        style="flex:1;width:100%;background:#0f1117;border:none;outline:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.8;padding:20px 18px;resize:none;"></textarea>
+        style="flex:1;width:100%;background:var(--bg);border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.8;padding:20px 18px;resize:none;"></textarea>
       <!-- BOTÃO ESTRUTURAR -->
-      <div style="padding:12px 18px;border-top:1px solid #1a1d27;display:flex;align-items:center;gap:10px;background:#0f1117;">
+      <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--bg);">
         <button class="btn btn-sm" onclick="estruturarMinuta()"
           style="background:linear-gradient(135deg,rgba(124,106,247,.2),rgba(79,142,247,.2));color:#c4b8ff;border:1px solid rgba(124,106,247,.35);font-weight:600">
           ✨ Estruturar Minuta
         </button>
-        <span style="font-size:.72rem;color:#555">Organiza o texto com IA em tópicos e decisões</span>
+        <span style="font-size:.72rem;color:var(--text4)">Organiza o texto com IA em tópicos e decisões</span>
       </div>
     </div>
 
     <!-- RESULTADO ESTRUTURADO -->
     <div id="minutaEstrutView" style="flex:1;display:none;flex-direction:column;">
       <!-- sub-header -->
-      <div style="padding:10px 18px;border-bottom:1px solid #1a1d27;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0f1117;">
+      <div style="padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg);">
         <span style="font-size:.78rem;color:#c4b8ff;font-weight:600">✨ Minuta estruturada</span>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="salvarEstruturada()">💾 Salvar esta versão</button>
@@ -399,14 +459,14 @@
         </div>
       </div>
       <div id="minutaEstrutContent"
-        style="flex:1;overflow-y:auto;padding:20px 18px;color:#fff;font-family:'DM Sans',sans-serif;font-size:.92rem;line-height:1.8;"></div>
+        style="flex:1;overflow-y:auto;padding:20px 18px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.92rem;line-height:1.8;"></div>
     </div>
 
     <!-- LOADING OVERLAY -->
-    <div id="estruturLoading" style="display:none;position:absolute;inset:0;background:rgba(15,17,23,.92);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
-      <div style="width:36px;height:36px;border-radius:50%;border:3px solid #2e334d;border-top-color:#7c6af7;animation:spin 1s linear infinite"></div>
-      <div style="font-size:.88rem;color:#c4b8ff;font-weight:500">Estruturando com IA…</div>
-      <div style="font-size:.75rem;color:#555" id="estruturLoadingMsg">Analisando transcrição</div>
+    <div id="estruturLoading" style="display:none;position:absolute;inset:0;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;">
+      <div style="width:36px;height:36px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin 1s linear infinite"></div>
+      <div style="font-size:.88rem;color:var(--accent);font-weight:500">Estruturando…</div>
+      <div style="font-size:.75rem;color:var(--text3)" id="estruturLoadingMsg">Analisando transcrição</div>
     </div>
 
   </div>
@@ -431,14 +491,14 @@
     </div>
     <div class="form-group">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-        <label class="form-label" style="margin:0">Pauta <span style="font-size:.72rem;color:#555;font-weight:400">— assuntos a tratar (visível só aqui)</span></label>
+        <label class="form-label" style="margin:0">Pauta <span style="font-size:.72rem;color:var(--text4);font-weight:400">— assuntos a tratar (visível só aqui)</span></label>
         <button class="btn btn-ghost btn-sm" onclick="expandPauta()" id="btnExpandPauta" type="button">⤢ Expandir</button>
       </div>
       <textarea class="form-input" id="eventPauta" rows="5" placeholder="• Ponto 1&#10;• Ponto 2&#10;• Ponto 3" style="resize:vertical;line-height:1.6;font-size:.85rem"></textarea>
     </div>
     <div style="margin-bottom:13px">
       <button class="btn btn-ghost btn-sm" onclick="gerarMinuta()" type="button" style="color:var(--orange);border-color:rgba(247,147,79,.3)">📝 Gerar Minuta</button>
-      <span style="font-size:.72rem;color:#555;margin-left:8px">Cria uma minuta editável a partir deste evento</span>
+      <span style="font-size:.72rem;color:var(--text4);margin-left:8px">Cria uma minuta editável a partir deste evento</span>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeEventModal()">Cancelar</button>
@@ -797,6 +857,7 @@ function renderSyncPage(){
     document.getElementById('showToken').textContent=G.token().slice(0,8)+'••••••••••••••••••••';
     document.getElementById('showGistId').textContent=G.id();
   }
+  atualizarBotoesTema(lsRaw('ag_tema')||'dark');
 }
 
 // ═══════════════════════════════════════════
@@ -850,7 +911,7 @@ function eCard(ev, dateStr){
   return `<div class="event-card ${cur?'current':''}" style="${past?'opacity:.72':''}">
     <div class="event-time"><span class="tr">${ev.start}</span>${ev.end}</div>
     <div class="event-body">
-      <div class="event-title">${ev.title}${hasPauta?' <span style="font-size:.65rem;color:#4f8ef7;margin-left:4px">📋</span>':''}</div>
+      <div class="event-title">${ev.title}${hasPauta?' <span style="font-size:.65rem;color:var(--accent);margin-left:4px">📋</span>':''}</div>
     </div>
     <div class="event-actions"><button class="btn btn-ghost btn-icon btn-sm" onclick='openEventModal(${JSON.stringify(ev)},"${dateStr}")'>✏️</button></div>
   </div>`;
@@ -909,7 +970,7 @@ function renderWeek(){
           <button class="btn btn-ghost btn-icon btn-sm" style="margin-left:auto" onclick='openEventModal(null,"${str}")' title="Adicionar evento">＋</button>
         </div>`;
       if(!evs.length){
-        html+=`<div style="font-size:.78rem;color:#555;padding:4px 0;display:flex;align-items:center;gap:10px;">
+        html+=`<div style="font-size:.78rem;color:var(--text4);padding:4px 0;display:flex;align-items:center;gap:10px;">
           Sem eventos
           <button class="btn btn-success btn-sm" onclick="applyTemplate(${dow},'${str}')">📋 Aplicar template</button>
         </div>`;
@@ -987,12 +1048,12 @@ function renderCalDay(str){
     const d=parseDate(str);
     const dow=d.getDay()===0?7:d.getDay();
     if(dow>=1&&dow<=5){
-      html+=`<div style="font-size:.8rem;color:#555;margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+      html+=`<div style="font-size:.8rem;color:var(--text4);margin-bottom:10px;display:flex;align-items:center;gap:10px;">
         Sem eventos
         <button class="btn btn-success btn-sm" onclick="applyTemplate(${dow},'${str}');calSelectDay('${str}')">📋 Aplicar template</button>
       </div>`;
     } else {
-      html+='<div style="font-size:.8rem;color:#555">Sem eventos</div>';
+      html+='<div style="font-size:.8rem;color:var(--text4)">Sem eventos</div>';
     }
   } else {
     html+=evs.map(ev=>eCard(ev,str)).join('');
@@ -1052,7 +1113,7 @@ function renderTemplate(){
         <div class="tpl-actions"><button class="btn btn-ghost btn-icon btn-sm" onclick='openTplModal(${JSON.stringify(ev)},${dow})'>✏️</button></div>
       </div>`;
     });
-    if(!evs.length) html+='<div style="font-size:.8rem;color:#555;padding:6px 0;">Sem eventos no template</div>';
+    if(!evs.length) html+='<div style="font-size:.8rem;color:var(--text4);padding:6px 0;">Sem eventos no template</div>';
     html+='</div>';
   });
   box.innerHTML=html;
@@ -1074,7 +1135,7 @@ function showPage(id){
   if(id==='tarefas') renderTasks();
   if(id==='minuta')  renderMinuta();
   if(id==='template')renderTemplate();
-  if(id==='sync')    renderSyncPage();
+  if(id==='sync')    { renderSyncPage(); atualizarBotoesTema(lsRaw('ag_tema')||'dark'); }
 }
 
 // ═══════════════════════════════════════════
@@ -1191,6 +1252,29 @@ function renderMinuta(){
 }
 
 // ═══════════════════════════════════════════
+//  TEMA
+// ═══════════════════════════════════════════
+function setTema(tema){
+  lsRawSet('ag_tema', tema);
+  aplicarTema(tema);
+  atualizarBotoesTema(tema);
+}
+
+function aplicarTema(tema){
+  document.body.classList.toggle('light', tema==='light');
+}
+
+function atualizarBotoesTema(tema){
+  const esc = document.getElementById('btnTemaEscuro');
+  const cla = document.getElementById('btnTemaClaro');
+  if(!esc||!cla) return;
+  const ativo   = 'background:var(--accent);color:#fff;border-color:var(--accent)';
+  const inativo = 'background:var(--surface2);color:var(--text3);border-color:var(--border)';
+  esc.style.cssText += ';' + (tema==='dark'  ? ativo : inativo);
+  cla.style.cssText += ';' + (tema==='light' ? ativo : inativo);
+}
+
+// ═══════════════════════════════════════════
 //  ESTRUTURAR MINUTA COM IA
 // ═══════════════════════════════════════════
 function voltarEditor(){
@@ -1301,14 +1385,14 @@ function deduplicar(arr){
 function renderEstruturada(obj, titulo, dataStr){
   let html = `
     <div style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)">
-      <div style="font-size:.7rem;color:#666;margin-bottom:4px">${dataStr}</div>
-      <div style="font-size:1.1rem;font-weight:700;color:#fff">${titulo}</div>
+      <div style="font-size:.7rem;color:var(--text4);margin-bottom:4px">${dataStr}</div>
+      <div style="font-size:1.1rem;font-weight:700;color:var(--text)">${titulo}</div>
     </div>`;
 
   // Resumo
   html+=`<div class="me-section">
     <h2>📋 Resumo Executivo</h2>
-    <p style="color:#ccc;font-size:.9rem;line-height:1.7">${obj.resumo||'—'}</p>
+    <p style="color:var(--text2);font-size:.9rem;line-height:1.7">${obj.resumo||'—'}</p>
   </div>`;
 
   // Tópicos
@@ -1616,6 +1700,8 @@ function toggleTask(id){
 // ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
+const temaSalvo = lsRaw('ag_tema') || 'dark';
+aplicarTema(temaSalvo);
 renderSyncPage();
 renderAll();
 setInterval(()=>{renderTopbar();if(currentPage==='hoje')renderToday();},30000);
