@@ -1882,7 +1882,14 @@ function isAtrasado(str){ if(!str)return false; return str < todayStr(); }
 function renderPipeline(){
   const fases = ['todo','doing','done'];
   fases.forEach(fase=>{
-    const cards = tasks.filter(t=>(t.fase||'todo')===fase);
+    const cards = tasks
+      .filter(t=>(t.fase||'todo')===fase)
+      .sort((a,b)=>{
+        if(!a.dataExec && !b.dataExec) return 0;
+        if(!a.dataExec) return 1;  // sem data vai para o final
+        if(!b.dataExec) return -1;
+        return a.dataExec.localeCompare(b.dataExec);
+      });
     document.getElementById('cnt-'+fase).textContent = cards.length;
     const box = document.getElementById('cards-'+fase);
     if(!cards.length){ box.innerHTML=''; return; }
