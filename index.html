@@ -247,6 +247,14 @@
   body.light .pipeline-add:hover { border-color: var(--accent); color: var(--accent); }
   body.light .p-card-cat { background: #e8ecf5; color: #6670a0; }
   body.light .p-card-date { background: #e8ecf5; }
+  .p-card-fase-btns{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);gap:6px;}
+  .p-fase-btn{font-size:.7rem;font-weight:600;padding:4px 9px;border-radius:6px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;}
+  .p-fase-btn.next{background:rgba(79,142,247,.12);color:var(--accent);margin-left:auto;}
+  .p-fase-btn.next:hover{background:rgba(79,142,247,.25);}
+  .p-fase-btn.prev{background:var(--surface2);color:var(--text3);}
+  .p-fase-btn.prev:hover{background:var(--border);color:var(--text);}
+  body.light .p-fase-btn.prev{background:#e8ecf5;color:var(--text3);}
+  body.light .p-card-fase-btns{border-top-color:#dde1ed;}
 
   /* pipeline page bypasses max-width */
   #page-pipeline{
@@ -1883,7 +1891,14 @@ function renderPipeline(){
 }
 
 function cardHTML(t){
-  const atrasado = isAtrasado(t.dataEntrega) && (t.fase||'todo')!=='done';
+  const fase = t.fase || 'todo';
+  const atrasado = isAtrasado(t.dataEntrega) && fase !== 'done';
+  const faseLabel = { todo:'A Fazer', doing:'Fazendo', done:'Feito' };
+  const proxFase  = { todo:'doing', doing:'done', done:null };
+  const prevFase  = { todo:null, doing:'todo', done:'doing' };
+  const proxLabel = { todo:'→ Fazendo', doing:'→ Feito', done:null };
+  const prevLabel = { todo:null, doing:'← A Fazer', done:'← Fazendo' };
+
   return `<div class="p-card" draggable="true"
     ondragstart="onDragStart(event,'${t.id}')"
     ondragend="onDragEnd(event)">
@@ -1898,7 +1913,21 @@ function cardHTML(t){
       ${t.dataExec?`<span class="p-card-date exec">▶ ${fmtDateBR(t.dataExec)}</span>`:''}
       ${t.dataEntrega ? '<span class="p-card-date entrega' + (atrasado?' atrasado':'') + '">⏱ ' + fmtDateBR(t.dataEntrega) + (atrasado?' ⚠':'') + '</span>' : ''}
     </div>
+    <div class="p-card-fase-btns">
+      ${prevFase[fase] ? `<button class="p-fase-btn prev" onclick="moverFase('${t.id}','${prevFase[fase]}')">${prevLabel[fase]}</button>` : '<span></span>'}
+      ${proxFase[fase] ? `<button class="p-fase-btn next" onclick="moverFase('${t.id}','${proxFase[fase]}')">${proxLabel[fase]}</button>` : ''}
+    </div>
   </div>`;
+}
+
+function moverFase(id, novaFase){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  t.fase = novaFase;
+  t.done = novaFase === 'done';
+  saveTasks();
+  renderPipeline();
+  renderTasks();
 }
 
 // ── DRAG & DROP ──
