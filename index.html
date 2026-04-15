@@ -174,9 +174,44 @@
   .minuta-item:hover .minuta-item-actions{opacity:1;}
 
   /* ── PIPELINE ── */
-  .pipeline-wrap{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;align-items:flex-start;}
+  .pipeline-wrap{
+    display:flex;
+    gap:16px;
+    overflow-x:auto;
+    padding-bottom:16px;
+    align-items:flex-start;
+    justify-content:center;
+  }
   .pipeline-wrap::-webkit-scrollbar{height:4px;}
-  .pipeline-col{flex:0 0 270px;background:var(--surface2);border-radius:var(--radius);display:flex;flex-direction:column;min-height:200px;border:1px solid var(--border);}
+
+  /* Largura das colunas responsiva */
+  .pipeline-col{
+    flex:1 1 0;
+    min-width:280px;
+    max-width:420px;
+    background:var(--surface2);
+    border-radius:var(--radius);
+    display:flex;
+    flex-direction:column;
+    min-height:200px;
+    border:1px solid var(--border);
+  }
+
+  /* Mobile: colunas empilhadas, sem scroll lateral */
+  @media(max-width:700px){
+    .pipeline-wrap{
+      flex-direction:column;
+      align-items:stretch;
+      overflow-x:hidden;
+    }
+    .pipeline-col{
+      min-width:unset;
+      max-width:unset;
+      flex:none;
+      width:100%;
+    }
+  }
+
   .pipeline-col-header{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
   .pipeline-col-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;}
   .pipeline-col-count{font-size:.68rem;font-weight:600;background:var(--border);color:var(--text3);border-radius:20px;padding:2px 8px;}
@@ -202,9 +237,25 @@
   .p-card-cat{font-size:.65rem;font-weight:600;background:var(--surface2);color:var(--text3);border-radius:6px;padding:2px 6px;}
   .p-card-actions{position:absolute;top:8px;right:8px;display:flex;gap:2px;opacity:0;transition:opacity .15s;}
   .p-card:hover .p-card-actions{opacity:1;}
+  @media(max-width:700px){.p-card-actions{opacity:1;}}
   .pipeline-add{margin:4px 8px 8px;padding:8px;border:1px dashed var(--border);border-radius:8px;font-size:.78rem;color:var(--text4);text-align:center;cursor:pointer;transition:all .15s;}
   .pipeline-add:hover{border-color:var(--accent);color:var(--accent);}
-  body.light .p-card{box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  body.light .pipeline-col { background: #dde1ed; border-color: #c8cde0; }
+  body.light .pipeline-cards { background: #dde1ed; }
+  body.light .p-card { background: #ffffff; border-color: #cdd1e3; }
+  body.light .pipeline-add { border-color: #b8bdd4; color: #8890bb; }
+  body.light .pipeline-add:hover { border-color: var(--accent); color: var(--accent); }
+  body.light .p-card-cat { background: #e8ecf5; color: #6670a0; }
+  body.light .p-card-date { background: #e8ecf5; }
+
+  /* pipeline page bypasses max-width */
+  #page-pipeline{
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    width: 100vw;
+    padding: 0;
+  }
+  .pipeline-outer{padding:16px 16px 100px;}
 
   @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -322,34 +373,36 @@
 
   <!-- PIPELINE -->
   <div id="page-pipeline" class="page">
-    <div class="section-header">
-      <div class="section-title">Pipeline</div>
-      <button class="btn btn-primary btn-sm" onclick="openCardModal(null)">+ Card</button>
-    </div>
-    <div class="pipeline-wrap" id="pipelineWrap">
-      <div class="pipeline-col" data-fase="todo" ondragover="onDragOver(event)" ondrop="onDrop(event,'todo')" ondragleave="onDragLeave(event)">
-        <div class="pipeline-col-header">
-          <span class="pipeline-col-title">A Fazer</span>
-          <span class="pipeline-col-count" id="cnt-todo">0</span>
-        </div>
-        <div class="pipeline-cards" id="cards-todo"></div>
-        <div class="pipeline-add" onclick="openCardModal(null,'todo')">+ Adicionar card</div>
+    <div class="pipeline-outer">
+      <div class="section-header" style="max-width:700px;margin-left:auto;margin-right:auto">
+        <div class="section-title">Pipeline</div>
+        <button class="btn btn-primary btn-sm" onclick="openCardModal(null)">+ Card</button>
       </div>
-      <div class="pipeline-col" data-fase="doing" ondragover="onDragOver(event)" ondrop="onDrop(event,'doing')" ondragleave="onDragLeave(event)">
-        <div class="pipeline-col-header">
-          <span class="pipeline-col-title">Fazendo</span>
-          <span class="pipeline-col-count" id="cnt-doing">0</span>
+      <div class="pipeline-wrap" id="pipelineWrap">
+        <div class="pipeline-col" data-fase="todo" ondragover="onDragOver(event)" ondrop="onDrop(event,'todo')" ondragleave="onDragLeave(event)">
+          <div class="pipeline-col-header">
+            <span class="pipeline-col-title">A Fazer</span>
+            <span class="pipeline-col-count" id="cnt-todo">0</span>
+          </div>
+          <div class="pipeline-cards" id="cards-todo"></div>
+          <div class="pipeline-add" onclick="openCardModal(null,'todo')">+ Adicionar card</div>
         </div>
-        <div class="pipeline-cards" id="cards-doing"></div>
-        <div class="pipeline-add" onclick="openCardModal(null,'doing')">+ Adicionar card</div>
-      </div>
-      <div class="pipeline-col" data-fase="done" ondragover="onDragOver(event)" ondrop="onDrop(event,'done')" ondragleave="onDragLeave(event)">
-        <div class="pipeline-col-header">
-          <span class="pipeline-col-title">Feito</span>
-          <span class="pipeline-col-count" id="cnt-done">0</span>
+        <div class="pipeline-col" data-fase="doing" ondragover="onDragOver(event)" ondrop="onDrop(event,'doing')" ondragleave="onDragLeave(event)">
+          <div class="pipeline-col-header">
+            <span class="pipeline-col-title">Fazendo</span>
+            <span class="pipeline-col-count" id="cnt-doing">0</span>
+          </div>
+          <div class="pipeline-cards" id="cards-doing"></div>
+          <div class="pipeline-add" onclick="openCardModal(null,'doing')">+ Adicionar card</div>
         </div>
-        <div class="pipeline-cards" id="cards-done"></div>
-        <div class="pipeline-add" onclick="openCardModal(null,'done')">+ Adicionar card</div>
+        <div class="pipeline-col" data-fase="done" ondragover="onDragOver(event)" ondrop="onDrop(event,'done')" ondragleave="onDragLeave(event)">
+          <div class="pipeline-col-header">
+            <span class="pipeline-col-title">Feito</span>
+            <span class="pipeline-col-count" id="cnt-done">0</span>
+          </div>
+          <div class="pipeline-cards" id="cards-done"></div>
+          <div class="pipeline-add" onclick="openCardModal(null,'done')">+ Adicionar card</div>
+        </div>
       </div>
     </div>
   </div>
@@ -537,6 +590,39 @@
       <div style="font-size:.75rem;color:var(--text3)" id="estruturLoadingMsg">Analisando transcrição</div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL AGENDAR (pipeline → agenda) -->
+<div class="modal-overlay" id="agendarModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📅 Gerar Agenda</h2>
+    <p style="font-size:.82rem;color:var(--text3);margin-bottom:16px;line-height:1.5">
+      Cria um evento na agenda a partir deste card do pipeline.
+    </p>
+    <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:16px;">
+      <div style="font-size:.72rem;color:var(--text3);margin-bottom:3px">Atividade</div>
+      <div style="font-size:.9rem;font-weight:600;color:var(--text)" id="agendarTitulo"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data</label>
+      <input type="date" class="form-input" id="agendarData">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Início</label>
+        <input type="time" class="form-input" id="agendarInicio" value="08:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fim</label>
+        <input type="time" class="form-input" id="agendarFim" value="09:00">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeAgendarModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarAgendar()">📅 Criar na Agenda</button>
+    </div>
   </div>
 </div>
 
@@ -1802,14 +1888,15 @@ function cardHTML(t){
     ondragstart="onDragStart(event,'${t.id}')"
     ondragend="onDragEnd(event)">
     <div class="p-card-actions">
-      <button class="btn btn-ghost btn-icon btn-sm" onclick="openCardModal('${t.id}')">✏️</button>
+      <button class="btn btn-ghost btn-icon btn-sm" title="Agendar" onclick="openAgendarModal('${t.id}')">📅</button>
+      <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openCardModal('${t.id}')">✏️</button>
     </div>
     <div class="p-card-title">${t.title}</div>
     ${t.desc?`<div class="p-card-desc">${t.desc}</div>`:''}
     <div class="p-card-meta">
       ${t.cat?`<span class="p-card-cat">${t.cat}</span>`:''}
       ${t.dataExec?`<span class="p-card-date exec">▶ ${fmtDateBR(t.dataExec)}</span>`:''}
-      ${t.dataEntrega?`<span class="p-card-date entrega ${atrasado?'atrasado':''}">⏱ ${fmtDateBR(t.dataEntrega)}${atrasado?' !'':''}</span>`:''}
+      ${t.dataEntrega ? '<span class="p-card-date entrega' + (atrasado?' atrasado':'') + '">⏱ ' + fmtDateBR(t.dataEntrega) + (atrasado?' ⚠':'') + '</span>' : ''}
     </div>
   </div>`;
 }
@@ -1926,7 +2013,56 @@ function deleteCard(){
   saveTasks(); closeCardModal(); renderPipeline(); renderTasks();
 }
 
-document.getElementById('cardModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeCardModal();});
+// ── AGENDAR CARD → AGENDA ──
+let agendarCardId = null;
+
+function openAgendarModal(cardId){
+  const t = tasks.find(t=>t.id===cardId);
+  if(!t) return;
+  agendarCardId = cardId;
+  document.getElementById('agendarTitulo').textContent = t.title;
+  // Pré-preenche com dataExec do card se existir, senão hoje
+  document.getElementById('agendarData').value    = t.dataExec || todayStr();
+  document.getElementById('agendarInicio').value  = '08:00';
+  document.getElementById('agendarFim').value      = '09:00';
+  document.getElementById('agendarModal').classList.add('open');
+}
+
+function closeAgendarModal(){
+  document.getElementById('agendarModal').classList.remove('open');
+  agendarCardId = null;
+}
+
+function confirmarAgendar(){
+  const t = tasks.find(t=>t.id===agendarCardId);
+  if(!t) return;
+  const data  = document.getElementById('agendarData').value;
+  const start = document.getElementById('agendarInicio').value;
+  const end   = document.getElementById('agendarFim').value;
+  if(!data){ alert('Selecione uma data.'); return; }
+  if(!agenda[data]) agenda[data] = [];
+  // Verifica se já existe evento igual nesse dia
+  const jaExiste = agenda[data].some(e=>e.title===t.title && e.start===start);
+  if(jaExiste){
+    if(!confirm('Já existe um evento com este nome neste dia e horário. Criar mesmo assim?')) return;
+  }
+  agenda[data].push({ id:uid(), start, end, title:t.title, pauta: t.desc||'' });
+  saveAgenda();
+  closeAgendarModal();
+  // Feedback visual
+  const d = parseDate(data);
+  const dias=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const meses=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  alert(`✅ Evento criado!\n${t.title}\n${dias[d.getDay()]}, ${d.getDate()} de ${meses[d.getMonth()]} · ${start}–${end}`);
+  // Se estiver na aba hoje ou semana, atualiza
+  if(currentPage==='hoje')   renderToday();
+  if(currentPage==='semana') renderWeek();
+  if(currentPage==='mes')    renderCal();
+}
+
+document.getElementById('agendarModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAgendarModal();});
+
+
 
 // ═══════════════════════════════════════════
 //  MODAL TAREFA
