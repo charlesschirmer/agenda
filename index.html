@@ -256,6 +256,23 @@
   body.light .p-fase-btn.prev{background:#e8ecf5;color:var(--text3);}
   body.light .p-card-fase-btns{border-top-color:#dde1ed;}
 
+  /* MODAL TABS */
+  .modal-tabs{display:flex;border-bottom:1px solid var(--border);margin:-4px -18px 18px;padding:0 18px;}
+  .modal-tab{padding:10px 16px;font-size:.82rem;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;}
+  .modal-tab:hover{color:var(--text);}
+  .modal-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .modal-tab-panel{display:none;}
+  .modal-tab-panel.active{display:block;}
+
+  /* FOLLOWUP LIST */
+  .fu-item{background:var(--surface2);border-radius:10px;padding:11px 13px;margin-bottom:8px;border-left:3px solid var(--accent);}
+  .fu-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:8px;}
+  .fu-item-date{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--accent);white-space:nowrap;}
+  .fu-item-del{background:none;border:none;cursor:pointer;color:var(--text4);font-size:.75rem;padding:2px 4px;border-radius:4px;transition:color .15s;}
+  .fu-item-del:hover{color:var(--red);}
+  .fu-item-text{font-size:.84rem;color:var(--text);line-height:1.5;}
+  .fu-empty{text-align:center;padding:24px 0;color:var(--text4);font-size:.82rem;}
+
   /* pipeline page bypasses max-width */
   #page-pipeline{
     margin-left: calc(-50vw + 50%);
@@ -639,43 +656,68 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 id="cardModalTitle">Novo Card</h2>
-    <div class="form-group">
-      <label class="form-label">Atividade</label>
-      <input type="text" class="form-input" id="cardTitle" placeholder="Ex: Implantar Sistema Biblioteca...">
+
+    <!-- ABAS -->
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchCardTab('dados')">📋 Dados</button>
+      <button class="modal-tab" onclick="switchCardTab('followup')" id="tabFollowup">🔄 Follow-up <span id="fuBadge" style="display:none;font-size:.65rem;background:var(--accent);color:#fff;border-radius:20px;padding:1px 6px;margin-left:4px"></span></button>
     </div>
-    <div class="form-group">
-      <label class="form-label">Categoria</label>
-      <input type="text" class="form-input" id="cardCat" placeholder="Ex: TI, ERP, Operacional...">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Descrição</label>
-      <textarea class="form-input" id="cardDesc" rows="3" placeholder="Detalhes da atividade..." style="resize:vertical;line-height:1.5"></textarea>
-    </div>
-    <div class="form-row">
+
+    <!-- ABA DADOS -->
+    <div id="cardTabDados" class="modal-tab-panel active">
       <div class="form-group">
-        <label class="form-label">Data de Execução</label>
-        <input type="date" class="form-input" id="cardExec">
+        <label class="form-label">Atividade</label>
+        <input type="text" class="form-input" id="cardTitle" placeholder="Ex: Implantar Sistema Biblioteca...">
       </div>
       <div class="form-group">
-        <label class="form-label">Data de Entrega</label>
-        <input type="date" class="form-input" id="cardEntrega">
+        <label class="form-label">Categoria</label>
+        <input type="text" class="form-input" id="cardCat" placeholder="Ex: TI, ERP, Operacional...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <textarea class="form-input" id="cardDesc" rows="3" placeholder="Detalhes da atividade..." style="resize:vertical;line-height:1.5"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Data de Execução</label>
+          <input type="date" class="form-input" id="cardExec">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Entrega</label>
+          <input type="date" class="form-input" id="cardEntrega">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fase</label>
+        <select class="form-select" id="cardFase">
+          <option value="todo">A Fazer</option>
+          <option value="doing">Fazendo</option>
+          <option value="done">Feito</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeCardModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveCard()">Salvar</button>
+      </div>
+      <div style="margin-top:10px;text-align:center">
+        <button class="btn btn-danger btn-sm" id="deleteCardBtn" onclick="deleteCard()" style="display:none">Excluir card</button>
       </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Fase</label>
-      <select class="form-select" id="cardFase">
-        <option value="todo">A Fazer</option>
-        <option value="doing">Fazendo</option>
-        <option value="done">Feito</option>
-      </select>
+
+    <!-- ABA FOLLOW-UP -->
+    <div id="cardTabFollowup" class="modal-tab-panel">
+      <!-- Entrada novo registro -->
+      <div class="form-group">
+        <label class="form-label">Novo registro</label>
+        <textarea class="form-input" id="fuTexto" rows="3" placeholder="O que foi feito? Qual o andamento?..." style="resize:vertical;line-height:1.5"></textarea>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="addFollowup()" style="margin-bottom:18px;width:100%;justify-content:center">
+        + Registrar agora
+      </button>
+      <!-- Lista de registros -->
+      <div id="fuList"></div>
     </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="closeCardModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveCard()">Salvar</button>
-    </div>
-    <div style="margin-top:10px;text-align:center">
-      <button class="btn btn-danger btn-sm" id="deleteCardBtn" onclick="deleteCard()" style="display:none">Excluir card</button>
-    </div>
+
   </div>
 </div>
 
@@ -1917,6 +1959,7 @@ function cardHTML(t){
     ${t.desc?`<div class="p-card-desc">${t.desc}</div>`:''}
     <div class="p-card-meta">
       ${t.cat?`<span class="p-card-cat">${t.cat}</span>`:''}
+      ${(t.followups||[]).length?`<span class="p-card-cat" style="color:var(--accent);background:rgba(79,142,247,.12)">🔄 ${t.followups.length}</span>`:''}
       ${t.dataExec?`<span class="p-card-date exec">▶ ${fmtDateBR(t.dataExec)}</span>`:''}
       ${t.dataEntrega ? '<span class="p-card-date entrega' + (atrasado?' atrasado':'') + '">⏱ ' + fmtDateBR(t.dataEntrega) + (atrasado?' ⚠':'') + '</span>' : ''}
     </div>
@@ -2007,6 +2050,64 @@ function initTouchDrag(){
 }
 initTouchDrag();
 
+// ── ABAS DO MODAL CARD ──
+function switchCardTab(tab){
+  document.querySelectorAll('.modal-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='dados'?0:1)));
+  document.getElementById('cardTabDados').classList.toggle('active',    tab==='dados');
+  document.getElementById('cardTabFollowup').classList.toggle('active', tab==='followup');
+  if(tab==='followup') renderFollowupList();
+}
+
+// ── FOLLOWUP ──
+function tsNow(){
+  const d=new Date();
+  return d.toLocaleDateString('pt-BR')+' '+d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+}
+
+function addFollowup(){
+  if(!editingCardId) return;
+  const texto = document.getElementById('fuTexto').value.trim();
+  if(!texto){ alert('Descreva o que foi feito.'); return; }
+  const t = tasks.find(t=>t.id===editingCardId);
+  if(!t) return;
+  if(!t.followups) t.followups=[];
+  t.followups.unshift({ id:uid(), ts: Date.now(), tsStr: tsNow(), texto });
+  document.getElementById('fuTexto').value='';
+  saveTasks();
+  renderFollowupList();
+  renderPipeline();
+}
+
+function deleteFollowup(cardId, fuId){
+  const t = tasks.find(t=>t.id===cardId);
+  if(!t) return;
+  t.followups = (t.followups||[]).filter(f=>f.id!==fuId);
+  saveTasks();
+  renderFollowupList();
+}
+
+function renderFollowupList(){
+  const t = editingCardId ? tasks.find(t=>t.id===editingCardId) : null;
+  const fus = t?.followups || [];
+  const badge = document.getElementById('fuBadge');
+  if(fus.length){ badge.style.display='inline'; badge.textContent=fus.length; }
+  else badge.style.display='none';
+  const box = document.getElementById('fuList');
+  if(!box) return;
+  if(!fus.length){
+    box.innerHTML='<div class="fu-empty">Nenhum registro ainda.<br>Adicione o primeiro follow-up acima.</div>';
+    return;
+  }
+  box.innerHTML = fus.map(f=>`
+    <div class="fu-item">
+      <div class="fu-item-header">
+        <span class="fu-item-date">🕐 ${f.tsStr}</span>
+        <button class="fu-item-del" onclick="deleteFollowup('${editingCardId}','${f.id}')" title="Excluir">✕</button>
+      </div>
+      <div class="fu-item-text">${f.texto.replace(/\n/g,'<br>')}</div>
+    </div>`).join('');
+}
+
 // ── MODAL CARD ──
 let editingCardId=null;
 function openCardModal(id, fase='todo'){
@@ -2020,6 +2121,16 @@ function openCardModal(id, fase='todo'){
   document.getElementById('cardEntrega').value=t?(t.dataEntrega||''):'';
   document.getElementById('cardFase').value=t?(t.fase||'todo'):fase;
   document.getElementById('deleteCardBtn').style.display=t?'inline-flex':'none';
+  document.getElementById('fuTexto').value='';
+  // Reset para aba Dados sempre que abre
+  switchCardTab('dados');
+  // Atualiza badge do followup
+  const fus=(t?.followups||[]).length;
+  const badge=document.getElementById('fuBadge');
+  if(fus){ badge.style.display='inline'; badge.textContent=fus; }
+  else badge.style.display='none';
+  // Oculta aba followup em card novo
+  document.getElementById('tabFollowup').style.display=t?'':'none';
   document.getElementById('cardModal').classList.add('open');
 }
 function closeCardModal(){ document.getElementById('cardModal').classList.remove('open'); }
