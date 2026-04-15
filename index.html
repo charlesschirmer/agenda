@@ -969,7 +969,7 @@ async function syncPull(){
     lsSet('ag2_template', template);
     lsSet('ag2_tasks',    tasks);
     lsSet('ag2_minutas',  minutas);
-    lsRawSet('ag_my_push',String(remote.ts||Date.now()));
+    // Não atualiza ag_my_push no pull manual — só push atualiza
     renderAll();
     setSyncUI('ok','Sincronizado ✓');
     addLog('✅ Agenda, Template, Tarefas e Minutas atualizados.');
@@ -2157,22 +2157,26 @@ if(G.ok()){
     const raw=data.files?.[GIST_FILE]?.content;
     if(!raw){setSyncUI('ok','Sincronizado ✓');return;}
     const remote=JSON.parse(raw);
-    const remoteTs=remote.ts||0;
-    const myPush=parseInt(lsRaw('ag_my_push')||'0');
-    addLog(`📡 Gist ts: ${remoteTs} | Meu push: ${myPush} | Atualizar: ${remoteTs>myPush?'SIM':'NÃO'}`);
-    if(remoteTs>myPush){
-      agenda   = remote.agenda   || agenda;
-      template = remote.template || template;
-      tasks    = remote.tasks    || tasks;
-      minutas  = remote.minutas  || minutas;
-      lsSet('ag2_agenda',   agenda);
-      lsSet('ag2_template', template);
-      lsSet('ag2_tasks',    tasks);
-      lsSet('ag2_minutas',  minutas);
-      lsRawSet('ag_my_push',String(remoteTs));
-      renderAll();
-      addLog('✅ Dados atualizados automaticamente.');
+    const remoteTs  = remote.ts || 0;
+    const myLastPush = parseInt(lsRaw('ag_my_push')||'0');
+    // Só não aplica se EU fui o último a enviar (meu push é mais recente que o remoto)
+    // Em qualquer outro caso, aplica o remoto
+    if(myLastPush >= remoteTs){
+      addLog(`ℹ️ Dados locais já atualizados (meu push: ${myLastPush}, remoto: ${remoteTs})`);
+      setSyncUI('ok','Sincronizado ✓');
+      return;
     }
+    agenda   = remote.agenda   || agenda;
+    template = remote.template || template;
+    tasks    = remote.tasks    || tasks;
+    minutas  = remote.minutas  || minutas;
+    lsSet('ag2_agenda',   agenda);
+    lsSet('ag2_template', template);
+    lsSet('ag2_tasks',    tasks);
+    lsSet('ag2_minutas',  minutas);
+    // NÃO atualiza ag_my_push aqui — só atualiza quando EU envio
+    renderAll();
+    addLog(`✅ Dados recebidos do Gist (ts: ${remoteTs})`);
     setSyncUI('ok','Sincronizado ✓');
   })
   .catch(e=>{setSyncUI('err','Erro sync');addLog('❌ '+e.message);});
