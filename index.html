@@ -173,6 +173,39 @@
   .minuta-item-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
   .minuta-item:hover .minuta-item-actions{opacity:1;}
 
+  /* ── PIPELINE ── */
+  .pipeline-wrap{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;align-items:flex-start;}
+  .pipeline-wrap::-webkit-scrollbar{height:4px;}
+  .pipeline-col{flex:0 0 270px;background:var(--surface2);border-radius:var(--radius);display:flex;flex-direction:column;min-height:200px;border:1px solid var(--border);}
+  .pipeline-col-header{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+  .pipeline-col-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;}
+  .pipeline-col-count{font-size:.68rem;font-weight:600;background:var(--border);color:var(--text3);border-radius:20px;padding:2px 8px;}
+  .pipeline-col[data-fase="todo"] .pipeline-col-title{color:var(--text3);}
+  .pipeline-col[data-fase="doing"] .pipeline-col-title{color:var(--accent);}
+  .pipeline-col[data-fase="done"] .pipeline-col-title{color:var(--green);}
+  .pipeline-col[data-fase="doing"]{border-top:3px solid var(--accent);}
+  .pipeline-col[data-fase="done"]{border-top:3px solid var(--green);}
+  .pipeline-col[data-fase="todo"]{border-top:3px solid var(--border);}
+  .pipeline-cards{padding:8px;flex:1;min-height:80px;}
+  .pipeline-col.drag-over .pipeline-cards{background:rgba(79,142,247,.06);border-radius:8px;}
+  .p-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;cursor:grab;transition:box-shadow .15s,transform .15s;position:relative;}
+  .p-card:active{cursor:grabbing;}
+  .p-card.dragging{opacity:.4;transform:scale(.97);}
+  .p-card:hover{box-shadow:var(--shadow);border-color:var(--accent);}
+  .p-card-title{font-size:.88rem;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:8px;}
+  .p-card-desc{font-size:.78rem;color:var(--text3);line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .p-card-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .p-card-date{font-size:.68rem;font-family:'DM Mono',monospace;color:var(--text3);background:var(--surface2);border-radius:6px;padding:2px 6px;display:flex;align-items:center;gap:3px;}
+  .p-card-date.exec{color:var(--accent);}
+  .p-card-date.entrega{color:var(--orange);}
+  .p-card-date.atrasado{color:var(--red);background:rgba(247,111,111,.1);}
+  .p-card-cat{font-size:.65rem;font-weight:600;background:var(--surface2);color:var(--text3);border-radius:6px;padding:2px 6px;}
+  .p-card-actions{position:absolute;top:8px;right:8px;display:flex;gap:2px;opacity:0;transition:opacity .15s;}
+  .p-card:hover .p-card-actions{opacity:1;}
+  .pipeline-add{margin:4px 8px 8px;padding:8px;border:1px dashed var(--border);border-radius:8px;font-size:.78rem;color:var(--text4);text-align:center;cursor:pointer;transition:all .15s;}
+  .pipeline-add:hover{border-color:var(--accent);color:var(--accent);}
+  body.light .p-card{box-shadow:0 1px 4px rgba(0,0,0,.06);}
+
   @keyframes spin{to{transform:rotate(360deg)}}
 
   /* MINUTA ESTRUTURADA */
@@ -241,6 +274,7 @@
   <button class="tab" onclick="showPage('semana')">Semana</button>
   <button class="tab" onclick="showPage('mes')">Mês</button>
   <button class="tab" onclick="showPage('tarefas')">Tarefas</button>
+  <button class="tab" onclick="showPage('pipeline')">Pipeline</button>
   <button class="tab" onclick="showPage('minuta')">Minuta</button>
   <button class="tab" onclick="showPage('template')">Template</button>
   <button class="tab" onclick="showPage('sync')">⚙️ Config</button>
@@ -284,6 +318,40 @@
       <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Tarefa</button>
     </div>
     <div id="taskList"></div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div id="page-pipeline" class="page">
+    <div class="section-header">
+      <div class="section-title">Pipeline</div>
+      <button class="btn btn-primary btn-sm" onclick="openCardModal(null)">+ Card</button>
+    </div>
+    <div class="pipeline-wrap" id="pipelineWrap">
+      <div class="pipeline-col" data-fase="todo" ondragover="onDragOver(event)" ondrop="onDrop(event,'todo')" ondragleave="onDragLeave(event)">
+        <div class="pipeline-col-header">
+          <span class="pipeline-col-title">A Fazer</span>
+          <span class="pipeline-col-count" id="cnt-todo">0</span>
+        </div>
+        <div class="pipeline-cards" id="cards-todo"></div>
+        <div class="pipeline-add" onclick="openCardModal(null,'todo')">+ Adicionar card</div>
+      </div>
+      <div class="pipeline-col" data-fase="doing" ondragover="onDragOver(event)" ondrop="onDrop(event,'doing')" ondragleave="onDragLeave(event)">
+        <div class="pipeline-col-header">
+          <span class="pipeline-col-title">Fazendo</span>
+          <span class="pipeline-col-count" id="cnt-doing">0</span>
+        </div>
+        <div class="pipeline-cards" id="cards-doing"></div>
+        <div class="pipeline-add" onclick="openCardModal(null,'doing')">+ Adicionar card</div>
+      </div>
+      <div class="pipeline-col" data-fase="done" ondragover="onDragOver(event)" ondrop="onDrop(event,'done')" ondragleave="onDragLeave(event)">
+        <div class="pipeline-col-header">
+          <span class="pipeline-col-title">Feito</span>
+          <span class="pipeline-col-count" id="cnt-done">0</span>
+        </div>
+        <div class="pipeline-cards" id="cards-done"></div>
+        <div class="pipeline-add" onclick="openCardModal(null,'done')">+ Adicionar card</div>
+      </div>
+    </div>
   </div>
 
   <!-- MINUTA -->
@@ -469,6 +537,51 @@
       <div style="font-size:.75rem;color:var(--text3)" id="estruturLoadingMsg">Analisando transcrição</div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL CARD PIPELINE -->
+<div class="modal-overlay" id="cardModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="cardModalTitle">Novo Card</h2>
+    <div class="form-group">
+      <label class="form-label">Atividade</label>
+      <input type="text" class="form-input" id="cardTitle" placeholder="Ex: Implantar Sistema Biblioteca...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoria</label>
+      <input type="text" class="form-input" id="cardCat" placeholder="Ex: TI, ERP, Operacional...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <textarea class="form-input" id="cardDesc" rows="3" placeholder="Detalhes da atividade..." style="resize:vertical;line-height:1.5"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Data de Execução</label>
+        <input type="date" class="form-input" id="cardExec">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data de Entrega</label>
+        <input type="date" class="form-input" id="cardEntrega">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fase</label>
+      <select class="form-select" id="cardFase">
+        <option value="todo">A Fazer</option>
+        <option value="doing">Fazendo</option>
+        <option value="done">Feito</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeCardModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCard()">Salvar</button>
+    </div>
+    <div style="margin-top:10px;text-align:center">
+      <button class="btn btn-danger btn-sm" id="deleteCardBtn" onclick="deleteCard()" style="display:none">Excluir card</button>
+    </div>
   </div>
 </div>
 
@@ -891,6 +1004,8 @@ function renderAll(){
   if(currentPage==='semana')  renderWeek();
   if(currentPage==='mes')     renderCal();
   if(currentPage==='tarefas') renderTasks();
+  if(currentPage==='pipeline')renderPipeline();
+  if(currentPage==='minuta')  renderMinuta();
   if(currentPage==='template')renderTemplate();
 }
 
@@ -1123,7 +1238,7 @@ function renderTemplate(){
 //  PAGES
 // ═══════════════════════════════════════════
 let currentPage='hoje';
-const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,minuta:4,template:5,sync:6};
+const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,pipeline:4,minuta:5,template:6,sync:7};
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===PAGE_IDX[id]));
@@ -1133,6 +1248,7 @@ function showPage(id){
   if(id==='semana')  renderWeek();
   if(id==='mes')     renderCal();
   if(id==='tarefas') renderTasks();
+  if(id==='pipeline')renderPipeline();
   if(id==='minuta')  renderMinuta();
   if(id==='template')renderTemplate();
   if(id==='sync')    { renderSyncPage(); atualizarBotoesTema(lsRaw('ag_tema')||'dark'); }
@@ -1658,6 +1774,159 @@ function deleteTplEvent(){
   template[editingTplDow]=(template[editingTplDow]||[]).filter(e=>e.id!==editingTpl.id);
   saveTemplate();closeTplModal();renderTemplate();
 }
+
+// ═══════════════════════════════════════════
+//  PIPELINE
+//  tasks agora também têm: fase, desc, dataExec, dataEntrega
+//  fase: 'todo' | 'doing' | 'done'
+// ═══════════════════════════════════════════
+let dragCardId = null;
+
+function fmtDateBR(str){ if(!str)return ''; const[y,m,d]=str.split('-'); return `${d}/${m}`; }
+function isAtrasado(str){ if(!str)return false; return str < todayStr(); }
+
+function renderPipeline(){
+  const fases = ['todo','doing','done'];
+  fases.forEach(fase=>{
+    const cards = tasks.filter(t=>(t.fase||'todo')===fase);
+    document.getElementById('cnt-'+fase).textContent = cards.length;
+    const box = document.getElementById('cards-'+fase);
+    if(!cards.length){ box.innerHTML=''; return; }
+    box.innerHTML = cards.map(t=>cardHTML(t)).join('');
+  });
+}
+
+function cardHTML(t){
+  const atrasado = isAtrasado(t.dataEntrega) && (t.fase||'todo')!=='done';
+  return `<div class="p-card" draggable="true"
+    ondragstart="onDragStart(event,'${t.id}')"
+    ondragend="onDragEnd(event)">
+    <div class="p-card-actions">
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="openCardModal('${t.id}')">✏️</button>
+    </div>
+    <div class="p-card-title">${t.title}</div>
+    ${t.desc?`<div class="p-card-desc">${t.desc}</div>`:''}
+    <div class="p-card-meta">
+      ${t.cat?`<span class="p-card-cat">${t.cat}</span>`:''}
+      ${t.dataExec?`<span class="p-card-date exec">▶ ${fmtDateBR(t.dataExec)}</span>`:''}
+      ${t.dataEntrega?`<span class="p-card-date entrega ${atrasado?'atrasado':''}">⏱ ${fmtDateBR(t.dataEntrega)}${atrasado?' !'':''}</span>`:''}
+    </div>
+  </div>`;
+}
+
+// ── DRAG & DROP ──
+function onDragStart(e, id){
+  dragCardId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(()=>{ const el=e.target; if(el) el.classList.add('dragging'); },0);
+}
+function onDragEnd(e){
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.pipeline-col').forEach(c=>c.classList.remove('drag-over'));
+}
+function onDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  e.currentTarget.classList.add('drag-over');
+}
+function onDragLeave(e){
+  e.currentTarget.classList.remove('drag-over');
+}
+function onDrop(e, fase){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(!dragCardId) return;
+  const t = tasks.find(t=>t.id===dragCardId);
+  if(t){ t.fase=fase; if(fase==='done') t.done=true; else t.done=false; }
+  dragCardId=null;
+  saveTasks();
+  renderPipeline();
+  renderTasks();
+}
+
+// ── TOUCH DRAG (mobile) ──
+let touchCard=null, touchClone=null, touchFase=null;
+function initTouchDrag(){
+  document.addEventListener('touchstart', e=>{
+    const card=e.target.closest('.p-card');
+    if(!card)return;
+    touchCard=card;
+    const id=card.querySelector('[ondragstart]')?.getAttribute('ondragstart')?.match(/'([^']+)'/)?.[1];
+    if(!id)return;
+    dragCardId=id;
+    touchClone=card.cloneNode(true);
+    touchClone.style.cssText='position:fixed;opacity:.7;pointer-events:none;z-index:999;width:'+card.offsetWidth+'px;';
+    document.body.appendChild(touchClone);
+  },{passive:true});
+
+  document.addEventListener('touchmove', e=>{
+    if(!touchClone)return;
+    const t=e.touches[0];
+    touchClone.style.left=(t.clientX-touchClone.offsetWidth/2)+'px';
+    touchClone.style.top=(t.clientY-30)+'px';
+    const el=document.elementFromPoint(t.clientX,t.clientY);
+    const col=el?.closest('.pipeline-col');
+    document.querySelectorAll('.pipeline-col').forEach(c=>c.classList.remove('drag-over'));
+    if(col){ col.classList.add('drag-over'); touchFase=col.dataset.fase; }
+    else touchFase=null;
+  },{passive:true});
+
+  document.addEventListener('touchend', e=>{
+    if(touchClone){ touchClone.remove(); touchClone=null; }
+    if(dragCardId&&touchFase){
+      const t=tasks.find(t=>t.id===dragCardId);
+      if(t){ t.fase=touchFase; t.done=touchFase==='done'; }
+      saveTasks(); renderPipeline(); renderTasks();
+    }
+    document.querySelectorAll('.pipeline-col').forEach(c=>c.classList.remove('drag-over'));
+    dragCardId=null; touchFase=null; touchCard=null;
+  },{passive:true});
+}
+initTouchDrag();
+
+// ── MODAL CARD ──
+let editingCardId=null;
+function openCardModal(id, fase='todo'){
+  editingCardId=id||null;
+  const t=id?tasks.find(t=>t.id===id):null;
+  document.getElementById('cardModalTitle').textContent=t?'Editar Card':'Novo Card';
+  document.getElementById('cardTitle').value=t?t.title:'';
+  document.getElementById('cardCat').value=t?(t.cat||''):'';
+  document.getElementById('cardDesc').value=t?(t.desc||''):'';
+  document.getElementById('cardExec').value=t?(t.dataExec||''):'';
+  document.getElementById('cardEntrega').value=t?(t.dataEntrega||''):'';
+  document.getElementById('cardFase').value=t?(t.fase||'todo'):fase;
+  document.getElementById('deleteCardBtn').style.display=t?'inline-flex':'none';
+  document.getElementById('cardModal').classList.add('open');
+}
+function closeCardModal(){ document.getElementById('cardModal').classList.remove('open'); }
+function saveCard(){
+  const title=document.getElementById('cardTitle').value.trim();
+  if(!title){alert('Preencha a atividade.');return;}
+  const data={
+    title,
+    cat:    document.getElementById('cardCat').value.trim()||'Geral',
+    desc:   document.getElementById('cardDesc').value.trim(),
+    dataExec:    document.getElementById('cardExec').value,
+    dataEntrega: document.getElementById('cardEntrega').value,
+    fase:   document.getElementById('cardFase').value,
+    done:   document.getElementById('cardFase').value==='done',
+  };
+  if(editingCardId){
+    const idx=tasks.findIndex(t=>t.id===editingCardId);
+    if(idx>=0) tasks[idx]={...tasks[idx],...data};
+  } else {
+    tasks.unshift({id:uid(),...data});
+  }
+  saveTasks(); closeCardModal(); renderPipeline(); renderTasks();
+}
+function deleteCard(){
+  if(!editingCardId||!confirm('Excluir este card?'))return;
+  tasks=tasks.filter(t=>t.id!==editingCardId);
+  saveTasks(); closeCardModal(); renderPipeline(); renderTasks();
+}
+
+document.getElementById('cardModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeCardModal();});
 
 // ═══════════════════════════════════════════
 //  MODAL TAREFA
