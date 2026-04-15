@@ -127,7 +127,16 @@
   .modal-handle{width:40px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 18px;}
   .modal h2{font-size:1rem;font-weight:600;margin-bottom:16px;color:var(--text);}
 
-  /* Card modal — centralizado, usa mais tela */
+  /* Event modal — centralizado, não fecha ao clicar fora */
+  #eventModal{align-items:center;padding:16px;}
+  #eventModal .modal{border-radius:16px;max-width:560px;max-height:88vh;transform:translateY(16px) scale(.98);position:relative;padding:20px 20px 24px;}
+  #eventModal.open .modal{transform:translateY(0) scale(1);}
+  #eventModal .modal-handle{display:none;}
+  @media(max-width:500px){
+    #eventModal{align-items:flex-end;padding:0;}
+    #eventModal .modal{border-radius:18px 18px 0 0;max-width:100%;max-height:94vh;transform:translateY(100%);padding:20px 16px 32px;}
+    #eventModal.open .modal{transform:translateY(0);}
+  }
   #cardModal{align-items:center;padding:16px;}
   #cardModal .modal{border-radius:16px;max-width:600px;max-height:88vh;transform:translateY(16px) scale(.98);position:relative;padding:20px 20px 24px;}
   #cardModal.open .modal{transform:translateY(0) scale(1);}
@@ -769,8 +778,8 @@
 <!-- MODAL EVENTO (agenda real) -->
 <div class="modal-overlay" id="eventModal">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <h2 id="eventModalTitle">Novo Evento</h2>
+    <button class="modal-close-btn" onclick="closeEventModal()" title="Fechar">✕</button>
+    <h2 id="eventModalTitle" style="padding-right:36px">Novo Evento</h2>
     <div class="form-group">
       <label class="form-label">Data</label>
       <input type="date" class="form-input" id="eventDate">
@@ -2287,8 +2296,8 @@ function toggleTask(id){
   if(t){t.done=!t.done;saveTasks();renderTasks();}
 }
 
-// ── Close modals ──
-['eventModal','tplModal','taskModal'].forEach(id=>{
+// ── Close modals ao clicar fora (só tpl e task) ──
+['tplModal','taskModal'].forEach(id=>{
   document.getElementById(id).addEventListener('click',e=>{
     if(e.target===e.currentTarget) document.getElementById(id).classList.remove('open');
   });
