@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>Agenda</title>
+<title>STPlan</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
@@ -408,7 +408,13 @@
 <body>
 
 <div class="topbar">
-  <h1>📅 <span>Agenda</span></h1>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">📅</div>
+    <div style="display:flex;flex-direction:column;line-height:1.2">
+      <span style="font-size:1rem;font-weight:700;color:var(--text)">STPlan</span>
+      <span style="font-size:.65rem;font-weight:400;color:var(--text3)">v3.0</span>
+    </div>
+  </div>
   <div class="topbar-right">
     <div id="syncBadge" class="sync-badge off" onclick="manualSync()" title="Clique para sincronizar">
       <div class="sync-dot" id="syncDot"></div>
