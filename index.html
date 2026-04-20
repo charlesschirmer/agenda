@@ -499,6 +499,7 @@
   <div id="page-minuta" class="page">
     <div class="section-header">
       <div class="section-title">Minutas <span class="badge" id="minutaBadge">0</span></div>
+      <button class="btn btn-primary btn-sm" onclick="novaMinutaAvulsa()">+ Nova Minuta</button>
     </div>
     <div id="minutaList"></div>
   </div>
@@ -651,10 +652,11 @@
         <button class="mtb" onclick="mInsert('• ')"     title="Marcador nível 1">• N1</button>
         <button class="mtb" onclick="mInsert('  ◦ ')"   title="Marcador nível 2">◦ N2</button>
         <button class="mtb" onclick="mInsert('    ▪ ')" title="Marcador nível 3">▪ N3</button>
+        <button class="mtb" onclick="mNumerar()"        title="Próximo número na sequência">1. Num</button>
         <div class="mtb-sep"></div>
         <span class="minuta-toolbar-label">Indentação</span>
-        <button class="mtb" onclick="mIndent()"  title="Aumentar indentação">→ +</button>
-        <button class="mtb" onclick="mOutdent()" title="Diminuir indentação">← −</button>
+        <button class="mtb" onclick="mIndent()"  title="Aumentar indentação (Tab)">→ +</button>
+        <button class="mtb" onclick="mOutdent()" title="Diminuir indentação (Shift+Tab)">← −</button>
         <div class="mtb-sep"></div>
         <button class="mtb" onclick="mInsert('─────────────────\n')" title="Separador">― sep</button>
         <button class="mtb" onclick="mInsert('\n[DECISÃO] ')" title="Marcador de decisão" style="color:var(--green)">✔ dec</button>
@@ -694,6 +696,28 @@
       <div style="font-size:.75rem;color:var(--text3)" id="estruturLoadingMsg">Analisando transcrição</div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL NOVA MINUTA AVULSA -->
+<div class="modal-overlay" id="novaMinutaModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📝 Nova Minuta</h2>
+    <div class="form-group">
+      <label class="form-label">Título da Minuta</label>
+      <input type="text" class="form-input" id="novaMinutaTitulo"
+        placeholder="Ex: Reunião de alinhamento, Planejamento Q2..."
+        onkeydown="if(event.key==='Enter') confirmarNovaMinuta()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data</label>
+      <input type="date" class="form-input" id="novaMinutaData">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeNovaMinutaModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarNovaMinuta()">Criar e Abrir</button>
+    </div>
   </div>
 </div>
 
@@ -1769,6 +1793,56 @@ function renderEstruturada(obj, titulo, dataStr){
   document.getElementById('minutaEstrutView').style.display='flex';
 }
 
+// ── NOVA MINUTA AVULSA ──
+function novaMinutaAvulsa(){
+  document.getElementById('novaMinutaTitulo').value = '';
+  document.getElementById('novaMinutaData').value   = todayStr();
+  document.getElementById('novaMinutaModal').classList.add('open');
+  setTimeout(()=>document.getElementById('novaMinutaTitulo').focus(), 200);
+}
+function closeNovaMinutaModal(){
+  document.getElementById('novaMinutaModal').classList.remove('open');
+}
+function confirmarNovaMinuta(){
+  const titulo = document.getElementById('novaMinutaTitulo').value.trim();
+  if(!titulo){ alert('Digite um título para a minuta.'); return; }
+  const data = document.getElementById('novaMinutaData').value || todayStr();
+  const nova = { id:uid(), date:data, title:titulo, texto:'', criadoEm:Date.now() };
+  minutas.unshift(nova);
+  saveMinutas();
+  renderMinuta();
+  closeNovaMinutaModal();
+  openMinutaFs(nova.id);
+}
+document.getElementById('novaMinutaModal').addEventListener('click',e=>{
+  if(e.target===e.currentTarget) closeNovaMinutaModal();
+});
+
+// ── NUMERAÇÃO AUTOMÁTICA ──
+function mNumerar(){
+  const ta = document.getElementById('minutaFsText');
+  const s  = ta.selectionStart;
+  const before = ta.value.substring(0, s);
+  // Descobre o próximo número olhando as linhas anteriores
+  const lines = before.split('\n');
+  let lastNum = 0;
+  for(let i = lines.length - 1; i >= 0; i--){
+    const m = lines[i].match(/^(\s*)(\d+)\.\s/);
+    if(m){ lastNum = parseInt(m[2]); break; }
+  }
+  const nextNum = lastNum + 1;
+  // Detecta indentação da linha atual
+  const lineStart = before.lastIndexOf('\n') + 1;
+  const currentLine = ta.value.substring(lineStart, s);
+  const indent = currentLine.match(/^(\s*)/)?.[1] || '';
+  const needNL = before.length > 0 && !before.endsWith('\n');
+  const insert = (needNL ? '\n' : '') + indent + nextNum + '. ';
+  ta.value = before + insert + ta.value.substring(s);
+  const pos = s + insert.length;
+  ta.setSelectionRange(pos, pos);
+  ta.focus();
+}
+
 // ═══════════════════════════════════════════
 //  EDITOR MINUTA — FORMATAÇÃO
 // ═══════════════════════════════════════════
@@ -1812,32 +1886,42 @@ function mOutdent(){
 
 function minutaKeyDown(e){
   const ta = e.target;
-  // Tab → indenta
   if(e.key === 'Tab'){
     e.preventDefault();
-    if(e.shiftKey) mOutdent();
-    else mIndent();
+    if(e.shiftKey) mOutdent(); else mIndent();
     return;
   }
-  // Enter → continua o marcador da linha atual
   if(e.key === 'Enter'){
     const s = ta.selectionStart;
     const before = ta.value.substring(0, s);
     const lineStart = before.lastIndexOf('\n') + 1;
     const currentLine = ta.value.substring(lineStart, s);
-    // Detecta marcador no início da linha (com indentação)
-    const match = currentLine.match(/^(\s*)(•\s|◦\s|▪\s|\d+\.\s)/);
-    if(match){
+    // Marcador numérico: "  2. "
+    const numMatch = currentLine.match(/^(\s*)(\d+)\.\s(.*)$/);
+    if(numMatch){
       e.preventDefault();
-      // Se a linha está vazia após o marcador, remove o marcador (sai da lista)
-      const afterBullet = currentLine.substring(match[0].length);
-      if(!afterBullet.trim()){
-        // Remove o marcador da linha atual
+      if(!numMatch[3].trim()){
+        // Linha vazia após número → sai da lista
         ta.value = ta.value.substring(0, lineStart) + ta.value.substring(s);
         ta.setSelectionRange(lineStart, lineStart);
       } else {
-        // Continua com o mesmo marcador e indentação
-        const insert = '\n' + match[1] + match[2];
+        const nextNum = parseInt(numMatch[2]) + 1;
+        const insert = '\n' + numMatch[1] + nextNum + '. ';
+        ta.value = ta.value.substring(0, s) + insert + ta.value.substring(s);
+        ta.setSelectionRange(s + insert.length, s + insert.length);
+      }
+      return;
+    }
+    // Marcador de símbolo: "  • " / "  ◦ " / "  ▪ "
+    const bulMatch = currentLine.match(/^(\s*)(•\s|◦\s|▪\s)/);
+    if(bulMatch){
+      e.preventDefault();
+      const afterBullet = currentLine.substring(bulMatch[0].length);
+      if(!afterBullet.trim()){
+        ta.value = ta.value.substring(0, lineStart) + ta.value.substring(s);
+        ta.setSelectionRange(lineStart, lineStart);
+      } else {
+        const insert = '\n' + bulMatch[1] + bulMatch[2];
         ta.value = ta.value.substring(0, s) + insert + ta.value.substring(s);
         ta.setSelectionRange(s + insert.length, s + insert.length);
       }
