@@ -937,42 +937,45 @@
 //  TEMPLATE PADRÃO (seg=1 … sex=5)
 // ═══════════════════════════════════════════
 const TEMPLATE_PADRAO = {
-  1:[
-    {id:'s1',start:'08:00',end:'10:00',title:'Reunião de Performance da Operação – Produção | Logística | Comercial | Vendas'},
-    {id:'s2',start:'10:00',end:'11:30',title:'Análise de Indicadores Estratégicos'},
-    {id:'s3',start:'13:00',end:'15:00',title:'Bloco de Decisões Estratégicas'},
-    {id:'s4',start:'15:00',end:'17:00',title:'Projetos Estratégicos (Expansão / Melhoria / Escala)'},
-    {id:'s5',start:'17:15',end:'17:30',title:'Daily Executivo – fechamento + direcionamento do próximo dia'},
+  1:[ // SEGUNDA
+    {id:'s1',start:'08:00',end:'09:30',title:'Reunião de Performance Semanal – Captação | Vendas | RH | Marketing | Administrativo'},
+    {id:'s2',start:'09:30',end:'10:30',title:'Análise de Indicadores Estratégicos (KPIs das 5 áreas)'},
+    {id:'s3',start:'10:30',end:'11:30',title:'Alinhamento com Gerentes de Área (prioridades da semana)'},
+    {id:'s4',start:'13:00',end:'15:00',title:'Bloco de Decisões Estratégicas'},
+    {id:'s5',start:'15:00',end:'17:00',title:'Projetos Estratégicos e Iniciativas de Melhoria'},
+    {id:'s6',start:'17:30',end:'17:45',title:'Daily Executivo – fechamento + direcionamento do próximo dia'},
   ],
-  2:[
-    {id:'t1',start:'08:00',end:'09:30',title:'Reunião Comercial Estratégica – Captação + Vendas'},
-    {id:'t2',start:'09:30',end:'11:30',title:'Relacionamentos Estratégicos – Grandes clientes / parceiros'},
-    {id:'t3',start:'13:00',end:'15:00',title:'Bloco de Decisões Estratégicas'},
-    {id:'t4',start:'15:00',end:'17:00',title:'Projetos de Expansão'},
-    {id:'t5',start:'17:15',end:'17:30',title:'Daily Executivo'},
+  2:[ // TERÇA
+    {id:'t1',start:'08:00',end:'09:30',title:'Reunião Estratégica de Captação – Pipeline e novas oportunidades'},
+    {id:'t2',start:'09:30',end:'11:00',title:'Relacionamentos Estratégicos – Grandes fornecedores / parceiros'},
+    {id:'t3',start:'11:00',end:'11:50',title:'Análise de Contratos e Negociações em andamento'},
+    {id:'t4',start:'13:00',end:'14:30',title:'Bloco de Decisões Estratégicas – Captação'},
+    {id:'t5',start:'14:30',end:'17:00',title:'Projetos de Expansão Comercial'},
+    {id:'t6',start:'17:30',end:'17:45',title:'Daily Executivo'},
   ],
-  3:[
-    {id:'q1',start:'08:00',end:'09:30',title:'Revisão de KPIs e Metas'},
-    {id:'q2',start:'09:30',end:'11:00',title:'Reunião com Logística e Operações (gerencial)'},
-    {id:'q3',start:'11:00',end:'11:50',title:'1:1 com Gerentes (rodízio)'},
-    {id:'q4',start:'13:00',end:'14:00',title:'Alinhamento com Diretoria Administrativa/Financeira'},
-    {id:'q5',start:'14:00',end:'17:00',title:'Projetos Estratégicos + Acompanhamento de Metas'},
-    {id:'q6',start:'17:15',end:'17:30',title:'Daily Executivo'},
+  3:[ // QUARTA
+    {id:'q1',start:'08:00',end:'09:30',title:'Reunião Comercial – Resultados de Vendas vs Meta'},
+    {id:'q2',start:'09:30',end:'10:30',title:'Revisão de Campanhas e Ações de Marketing'},
+    {id:'q3',start:'10:30',end:'11:50',title:'Alinhamento Vendas + Marketing (funil e conversão)'},
+    {id:'q4',start:'13:00',end:'14:30',title:'Estratégia de Crescimento e Novos Mercados'},
+    {id:'q5',start:'14:30',end:'17:00',title:'Projetos Estratégicos + Acompanhamento de Metas Comerciais'},
+    {id:'q6',start:'17:30',end:'17:45',title:'Daily Executivo'},
   ],
-  4:[
-    {id:'u1',start:'08:00',end:'10:30',title:'Projetos de Engenharia e Inovação'},
-    {id:'u2',start:'10:30',end:'11:50',title:'Auditoria Estratégica (com checklist)'},
-    {id:'u3',start:'13:00',end:'15:30',title:'Bloco de Planejamento e Decisões Críticas'},
-    {id:'u4',start:'15:30',end:'17:00',title:'Atendimento a Gerentes (somente estratégico)'},
-    {id:'u5',start:'17:15',end:'17:30',title:'Daily Executivo'},
+  4:[ // QUINTA
+    {id:'u1',start:'08:00',end:'09:30',title:'Gestão de Pessoas – Recrutamento | Performance | Clima'},
+    {id:'u2',start:'09:30',end:'11:00',title:'Revisão de Processos Administrativos e Operacionais'},
+    {id:'u3',start:'11:00',end:'11:50',title:'1:1 com Lideranças das Áreas (rodízio semanal)'},
+    {id:'u4',start:'13:00',end:'15:00',title:'Bloco de Planejamento e Decisões Críticas'},
+    {id:'u5',start:'15:00',end:'17:00',title:'Projetos de Estruturação e Melhoria Organizacional'},
+    {id:'u6',start:'17:30',end:'17:45',title:'Daily Executivo'},
   ],
-  5:[
-    {id:'x1',start:'08:00',end:'09:30',title:'Revisão da Semana (resultado vs meta)'},
-    {id:'x2',start:'09:30',end:'11:00',title:'1:1 com Lideranças'},
-    {id:'x3',start:'13:00',end:'14:30',title:'Reunião com Gestores (estratégico)'},
-    {id:'x4',start:'14:30',end:'16:30',title:'Mentoria / Desenvolvimento Pessoal'},
-    {id:'x5',start:'16:30',end:'17:00',title:'Planejamento da Próxima Semana'},
-    {id:'x6',start:'17:15',end:'17:30',title:'Daily Executivo'},
+  5:[ // SEXTA
+    {id:'x1',start:'08:00',end:'09:30',title:'Revisão da Semana – Resultado vs Meta (todas as áreas)'},
+    {id:'x2',start:'09:30',end:'11:00',title:'1:1 com Lideranças Diretas'},
+    {id:'x3',start:'13:00',end:'14:30',title:'Reunião de Gestores – Alinhamento Estratégico'},
+    {id:'x4',start:'14:30',end:'16:00',title:'Mentoria / Desenvolvimento de Lideranças'},
+    {id:'x5',start:'16:00',end:'17:00',title:'Planejamento da Próxima Semana'},
+    {id:'x6',start:'17:30',end:'17:45',title:'Daily Executivo'},
   ],
 };
 
