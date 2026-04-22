@@ -936,6 +936,9 @@
 // ═══════════════════════════════════════════
 //  TEMPLATE PADRÃO (seg=1 … sex=5)
 // ═══════════════════════════════════════════
+// Versão do template — incrementar aqui sempre que mudar o TEMPLATE_PADRAO
+const TEMPLATE_VERSION = 2;
+
 const TEMPLATE_PADRAO = {
   1:[ // SEGUNDA
     {id:'s1',start:'08:00',end:'09:30',title:'Reunião de Performance Semanal – Captação | Vendas | RH | Marketing | Administrativo'},
@@ -1003,12 +1006,29 @@ function lsRawSet(k,v){localStorage.setItem(k,v);}
 function lsDel(k){localStorage.removeItem(k);}
 function clone(o){return JSON.parse(JSON.stringify(o));}
 
+// Carrega template com verificação de versão
+// Se a versão no HTML for maior que a salva, usa o padrão novo
+function loadTemplate(){
+  const savedVersion = parseInt(lsRaw('ag2_template_version')||'0');
+  if(savedVersion < TEMPLATE_VERSION){
+    // Nova versão do template — substitui e salva
+    lsSet('ag2_template', clone(TEMPLATE_PADRAO));
+    lsRawSet('ag2_template_version', String(TEMPLATE_VERSION));
+    return clone(TEMPLATE_PADRAO);
+  }
+  return lsGet('ag2_template', clone(TEMPLATE_PADRAO));
+}
+
 let agenda   = lsGet('ag2_agenda',   {});
-let template = lsGet('ag2_template', clone(TEMPLATE_PADRAO));
+let template = loadTemplate();
 let tasks    = lsGet('ag2_tasks',    clone(TAREFAS_PADRAO));
 
 function saveAgenda()   { lsSet('ag2_agenda',   agenda);   if(G.ok()) syncPush(true); }
-function saveTemplate() { lsSet('ag2_template', template); if(G.ok()) syncPush(true); }
+function saveTemplate() {
+  lsSet('ag2_template', template);
+  lsRawSet('ag2_template_version', String(TEMPLATE_VERSION));
+  if(G.ok()) syncPush(true);
+}
 function saveTasks()    { lsSet('ag2_tasks',    tasks);    if(G.ok()) syncPush(true); }
 
 // ═══════════════════════════════════════════
@@ -1097,7 +1117,7 @@ async function syncPush(silent=false){
   if(!G.ok())return;
   if(!silent)setSyncUI('busy','Enviando…');
   try{
-    const payload={agenda,template,tasks,minutas,ts:Date.now()};
+    const payload={agenda,template,tasks,minutas,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
     const r=await fetch(`https://api.github.com/gists/${G.id()}`,{
       method:'PATCH',
       headers:{'Authorization':'token '+G.token(),'Content-Type':'application/json'},
@@ -1126,11 +1146,15 @@ async function syncPull(){
     if(!raw){setSyncUI('ok','Sincronizado ✓');addLog('ℹ️ Gist sem dados.');return;}
     const remote=JSON.parse(raw);
     agenda   = remote.agenda    || agenda;
-    template = remote.template  || template;
+    // Só sobrescreve template se versão remota >= versão local do HTML
+    const remoteTemplateVersion = remote.templateVersion || 0;
+    if(remoteTemplateVersion >= TEMPLATE_VERSION){
+      template = remote.template || template;
+      lsSet('ag2_template', template);
+    }
     tasks    = remote.tasks     || tasks;
     minutas  = remote.minutas   || minutas;
     lsSet('ag2_agenda',   agenda);
-    lsSet('ag2_template', template);
     lsSet('ag2_tasks',    tasks);
     lsSet('ag2_minutas',  minutas);
     // Não atualiza ag_my_push no pull manual — só push atualiza
@@ -1169,7 +1193,7 @@ async function conectar(){
       if(!ck.ok)throw new Error('Gist ID não encontrado.');
       gistId=existId;
     } else {
-      const payload={agenda,template,tasks,minutas,ts:Date.now()};
+      const payload={agenda,template,tasks,minutas,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
       const cr=await fetch('https://api.github.com/gists',{
         method:'POST',
         headers:{'Authorization':'token '+token,'Content-Type':'application/json'},
@@ -2535,14 +2559,17 @@ if(G.ok()){
       setSyncUI('ok','Sincronizado ✓');
       return;
     }
-    agenda   = remote.agenda   || agenda;
-    template = remote.template || template;
-    tasks    = remote.tasks    || tasks;
-    minutas  = remote.minutas  || minutas;
-    lsSet('ag2_agenda',   agenda);
-    lsSet('ag2_template', template);
-    lsSet('ag2_tasks',    tasks);
-    lsSet('ag2_minutas',  minutas);
+    agenda  = remote.agenda  || agenda;
+    // Só sobrescreve template se versão remota >= versão local do HTML
+    if((remote.templateVersion||0) >= TEMPLATE_VERSION){
+      template = remote.template || template;
+      lsSet('ag2_template', template);
+    }
+    tasks   = remote.tasks   || tasks;
+    minutas = remote.minutas || minutas;
+    lsSet('ag2_agenda',  agenda);
+    lsSet('ag2_tasks',   tasks);
+    lsSet('ag2_minutas', minutas);
     // NÃO atualiza ag_my_push aqui — só atualiza quando EU envio
     renderAll();
     addLog(`✅ Dados recebidos do Gist (ts: ${remoteTs})`);
