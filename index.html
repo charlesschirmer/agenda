@@ -137,6 +137,16 @@
     #novaMinutaModal.open .modal{transform:translateY(0);}
   }
 
+  #blModal{align-items:center;padding:16px;}
+  #blModal .modal{border-radius:16px;max-width:560px;max-height:88vh;transform:translateY(16px) scale(.98);position:relative;padding:20px 20px 24px;}
+  #blModal.open .modal{transform:translateY(0) scale(1);}
+  #blModal .modal-handle{display:none;}
+  @media(max-width:500px){
+    #blModal{align-items:flex-end;padding:0;}
+    #blModal .modal{border-radius:18px 18px 0 0;max-width:100%;transform:translateY(100%);padding:20px 16px 32px;}
+    #blModal.open .modal{transform:translateY(0);}
+  }
+
   /* Event modal — centralizado, não fecha ao clicar fora */
   #eventModal{align-items:center;padding:16px;}
   #eventModal .modal{border-radius:16px;max-width:560px;max-height:88vh;transform:translateY(16px) scale(.98);position:relative;padding:20px 20px 24px;}
@@ -595,6 +605,7 @@
         <div class="bl-dd-menu">
           <div class="bl-dd-item active" onclick="selectDdDept('todos','Todos')">Todos</div>
           <div class="bl-dd-item" onclick="selectDdDept('Administrativo','Administrativo')">Administrativo</div>
+          <div class="bl-dd-item" onclick="selectDdDept('Direção','Direção')">Direção</div>
           <div class="bl-dd-item" onclick="selectDdDept('Logística','Logística')">Logística</div>
           <div class="bl-dd-item" onclick="selectDdDept('Marketing','Marketing')">Marketing</div>
           <div class="bl-dd-item" onclick="selectDdDept('Relacionamento','Relacionamento')">Relacionamento</div>
@@ -829,11 +840,12 @@
         <label class="form-label">Departamento</label>
         <select class="form-select" id="blDept">
           <option value="Administrativo">Administrativo</option>
+          <option value="Direção">Direção</option>
           <option value="Logística">Logística</option>
+          <option value="Marketing">Marketing</option>
           <option value="Relacionamento">Relacionamento</option>
           <option value="RH">RH</option>
           <option value="Vendas">Vendas</option>
-          <option value="Marketing">Marketing</option>
         </select>
       </div>
       <div class="form-group">
