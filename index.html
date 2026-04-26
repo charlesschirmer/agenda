@@ -315,6 +315,37 @@
   .fu-item-text{font-size:.84rem;color:var(--text);line-height:1.5;}
   .fu-empty{text-align:center;padding:24px 0;color:var(--text4);font-size:.82rem;}
 
+  /* ── BACKLOG ── */
+  .bl-dropdown{position:relative;display:inline-block;}
+  .bl-dd-btn{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;}
+  .bl-dd-btn:hover{border-color:var(--accent);}
+  .bl-dropdown.open .bl-dd-btn{border-color:var(--accent);background:var(--surface2);}
+  .bl-dd-arrow{font-size:.7rem;color:var(--text3);transition:transform .15s;}
+  .bl-dropdown.open .bl-dd-arrow{transform:rotate(180deg);}
+  .bl-dd-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:50;min-width:180px;overflow:hidden;}
+  .bl-dropdown.open .bl-dd-menu{display:block;}
+  .bl-dd-item{padding:10px 16px;font-size:.84rem;color:var(--text2);cursor:pointer;transition:background .12s;}
+  .bl-dd-item:hover{background:var(--surface2);}
+  .bl-dd-item.active{color:var(--accent);font-weight:600;background:rgba(79,142,247,.08);}
+  body.light .bl-dd-menu{box-shadow:0 8px 24px rgba(0,0,0,.12);}
+  body.light .bl-dd-btn{background:#f4f6fb;border-color:#c0c8d8;}
+  body.light .bl-dd-item:hover{background:#edf0f7;}
+  body.light .bl-dd-item.active{background:rgba(59,130,196,.08);}
+  .bl-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;}
+  .bl-item:hover{border-color:var(--accent);}
+  .bl-item-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
+  .bl-item-title{font-size:.9rem;font-weight:600;color:var(--text);line-height:1.3;flex:1;}
+  .bl-item-desc{font-size:.8rem;color:var(--text3);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .bl-item-footer{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .bl-tag{font-size:.67rem;font-weight:600;border-radius:6px;padding:2px 8px;white-space:nowrap;}
+  .bl-tag-dept{background:rgba(79,142,247,.12);color:var(--accent);}
+  .bl-tag-prio-alta{background:rgba(247,111,111,.15);color:var(--red);}
+  .bl-tag-prio-media{background:rgba(247,147,79,.15);color:var(--orange);}
+  .bl-tag-prio-baixa{background:rgba(62,207,142,.12);color:var(--green);}
+  .bl-tag-date{font-family:'DM Mono',monospace;font-size:.67rem;color:var(--text3);background:var(--surface2);border-radius:6px;padding:2px 7px;}
+  .bl-tag-date.sprint{color:var(--accent);}
+  body.light .bl-item{background:#f4f6fb;border-color:#c0c8d8;}
+
   /* FINALIZADO (arquivo) */
   .finalizado-wrap{max-width:700px;margin:0 auto;}
   .finalizado-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;opacity:.8;}
@@ -439,6 +470,7 @@
   <button class="tab" onclick="showPage('mes')">Mês</button>
   <button class="tab" onclick="showPage('tarefas')">Tarefas</button>
   <button class="tab" onclick="showPage('pipeline')">Pipeline</button>
+  <button class="tab" onclick="showPage('backlog')">BackLog</button>
   <button class="tab" onclick="showPage('minuta')">Minuta</button>
   <button class="tab" onclick="showPage('template')">Template</button>
   <button class="tab" onclick="showPage('sync')">⚙️ Config</button>
@@ -531,6 +563,48 @@
       <p style="max-width:700px;margin:0 auto 16px;font-size:.8rem;color:var(--text3)">Cards arquivados. Clique em <strong style="color:var(--text)">↩ Restaurar</strong> para devolver ao Pipeline.</p>
       <div class="finalizado-wrap" id="finalizadoList"></div>
     </div>
+  </div>
+
+  <!-- BACKLOG -->
+  <div id="page-backlog" class="page">
+    <div class="section-header">
+      <div class="section-title">BackLog <span class="badge" id="blBadge">0</span></div>
+      <button class="btn btn-primary btn-sm" onclick="openBlModal(null)">+ Item</button>
+    </div>
+
+    <!-- Filtros dropdown -->
+    <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+      <div class="bl-dropdown" id="ddStatus">
+        <button class="bl-dd-btn" onclick="toggleDd('ddStatus')">
+          <span id="ddStatusLabel">Status: Todos</span>
+          <span class="bl-dd-arrow">▾</span>
+        </button>
+        <div class="bl-dd-menu">
+          <div class="bl-dd-item active" onclick="selectDdStatus('todos','Todos')">Todos</div>
+          <div class="bl-dd-item" onclick="selectDdStatus('Incluído','Incluído')">Incluído</div>
+          <div class="bl-dd-item" onclick="selectDdStatus('Planejado','Planejado')">Planejado</div>
+          <div class="bl-dd-item" onclick="selectDdStatus('Em execução','Em execução')">Em execução</div>
+          <div class="bl-dd-item" onclick="selectDdStatus('Finalizado','Finalizado')">Finalizado</div>
+        </div>
+      </div>
+      <div class="bl-dropdown" id="ddDept">
+        <button class="bl-dd-btn" onclick="toggleDd('ddDept')">
+          <span id="ddDeptLabel">Departamento: Todos</span>
+          <span class="bl-dd-arrow">▾</span>
+        </button>
+        <div class="bl-dd-menu">
+          <div class="bl-dd-item active" onclick="selectDdDept('todos','Todos')">Todos</div>
+          <div class="bl-dd-item" onclick="selectDdDept('Administrativo','Administrativo')">Administrativo</div>
+          <div class="bl-dd-item" onclick="selectDdDept('Logística','Logística')">Logística</div>
+          <div class="bl-dd-item" onclick="selectDdDept('Marketing','Marketing')">Marketing</div>
+          <div class="bl-dd-item" onclick="selectDdDept('Relacionamento','Relacionamento')">Relacionamento</div>
+          <div class="bl-dd-item" onclick="selectDdDept('RH','RH')">RH</div>
+          <div class="bl-dd-item" onclick="selectDdDept('Vendas','Vendas')">Vendas</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="blList"></div>
   </div>
 
   <!-- MINUTA -->
@@ -734,6 +808,69 @@
       <div style="font-size:.75rem;color:var(--text3)" id="estruturLoadingMsg">Analisando transcrição</div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL BACKLOG -->
+<div class="modal-overlay" id="blModal">
+  <div class="modal" style="max-width:560px">
+    <button class="modal-close-btn" onclick="closeBlModal()" title="Fechar">✕</button>
+    <h2 id="blModalTitle" style="padding-right:36px">Novo Item</h2>
+    <div class="form-group">
+      <label class="form-label">Título</label>
+      <input type="text" class="form-input" id="blTitulo" placeholder="Descreva o item do backlog...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <textarea class="form-input" id="blDesc" rows="3" placeholder="Detalhes, contexto, objetivos..." style="resize:vertical;line-height:1.5"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Departamento</label>
+        <select class="form-select" id="blDept">
+          <option value="Administrativo">Administrativo</option>
+          <option value="Logística">Logística</option>
+          <option value="Relacionamento">Relacionamento</option>
+          <option value="RH">RH</option>
+          <option value="Vendas">Vendas</option>
+          <option value="Marketing">Marketing</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prioridade</label>
+        <select class="form-select" id="blPrio">
+          <option value="Baixa">Baixa</option>
+          <option value="Média">Média</option>
+          <option value="Alta">Alta</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-select" id="blStatus">
+        <option value="Incluído">Incluído</option>
+        <option value="Planejado">Planejado</option>
+        <option value="Em execução">Em execução</option>
+        <option value="Finalizado">Finalizado</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prazo de Entrega</label>
+        <input type="date" class="form-input" id="blPrazo">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data Sprint</label>
+        <input type="date" class="form-input" id="blSprint">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeBlModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveBlItem()">Salvar</button>
+    </div>
+    <div style="margin-top:10px;text-align:center">
+      <button class="btn btn-danger btn-sm" id="blDeleteBtn" onclick="deleteBlItem()" style="display:none">Excluir item</button>
+    </div>
   </div>
 </div>
 
@@ -1139,7 +1276,7 @@ async function syncPush(silent=false){
   if(!G.ok())return;
   if(!silent)setSyncUI('busy','Enviando…');
   try{
-    const payload={agenda,template,tasks,minutas,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
+    const payload={agenda,template,tasks,minutas,backlog,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
     const r=await fetch(`https://api.github.com/gists/${G.id()}`,{
       method:'PATCH',
       headers:{'Authorization':'token '+G.token(),'Content-Type':'application/json'},
@@ -1176,13 +1313,15 @@ async function syncPull(){
     }
     tasks    = remote.tasks     || tasks;
     minutas  = remote.minutas   || minutas;
+    backlog  = remote.backlog   || backlog;
     lsSet('ag2_agenda',   agenda);
     lsSet('ag2_tasks',    tasks);
     lsSet('ag2_minutas',  minutas);
+    lsSet('ag2_backlog',  backlog);
     // Não atualiza ag_my_push no pull manual — só push atualiza
     renderAll();
     setSyncUI('ok','Sincronizado ✓');
-    addLog('✅ Agenda, Template, Tarefas e Minutas atualizados.');
+    addLog('✅ Agenda, Template, Tarefas, Minutas e BackLog atualizados.');
   }catch(e){
     setSyncUI('err','Erro ao buscar');
     addLog('❌ '+e.message);
@@ -1215,7 +1354,7 @@ async function conectar(){
       if(!ck.ok)throw new Error('Gist ID não encontrado.');
       gistId=existId;
     } else {
-      const payload={agenda,template,tasks,minutas,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
+      const payload={agenda,template,tasks,minutas,backlog,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
       const cr=await fetch('https://api.github.com/gists',{
         method:'POST',
         headers:{'Authorization':'token '+token,'Content-Type':'application/json'},
@@ -1249,6 +1388,7 @@ function limparDadosLocais(){
   lsDel('ag2_template');
   lsDel('ag2_tasks');
   lsDel('ag2_minutas');
+  lsDel('ag2_backlog');
   lsDel('ag_my_push');
   agenda   = {};
   template = clone(TEMPLATE_PADRAO);
@@ -1542,7 +1682,7 @@ function renderTemplate(){
 //  PAGES
 // ═══════════════════════════════════════════
 let currentPage='hoje';
-const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,pipeline:4,minuta:5,template:6,sync:7};
+const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,pipeline:4,backlog:5,minuta:6,template:7,sync:8};
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===PAGE_IDX[id]));
@@ -1553,6 +1693,7 @@ function showPage(id){
   if(id==='mes')     renderCal();
   if(id==='tarefas') renderTasks();
   if(id==='pipeline')renderPipeline();
+  if(id==='backlog') renderBacklog();
   if(id==='minuta')  renderMinuta();
   if(id==='template')renderTemplate();
   if(id==='sync')    { renderSyncPage(); atualizarBotoesTema(lsRaw('ag_tema')||'dark'); }
@@ -1857,6 +1998,124 @@ function renderEstruturada(obj, titulo, dataStr){
   document.getElementById('minutaEditorView').style.display='none';
   document.getElementById('minutaEstrutView').style.display='flex';
 }
+
+// ═══════════════════════════════════════════
+//  BACKLOG
+// ═══════════════════════════════════════════
+let backlog = lsGet('ag2_backlog', []);
+function saveBacklog(){ lsSet('ag2_backlog', backlog); if(G.ok()) syncPush(true); }
+
+let blFiltroStatus = 'todos';
+let blFiltroDept   = 'todos';
+
+function toggleDd(id){
+  const el = document.getElementById(id);
+  const isOpen = el.classList.contains('open');
+  // Fecha todos os dropdowns
+  document.querySelectorAll('.bl-dropdown').forEach(d=>d.classList.remove('open'));
+  if(!isOpen) el.classList.add('open');
+}
+
+function selectDdStatus(val, label){
+  blFiltroStatus = val;
+  document.getElementById('ddStatusLabel').textContent = 'Status: ' + label;
+  document.querySelectorAll('#ddStatus .bl-dd-item').forEach(i=>i.classList.toggle('active', i.textContent===label));
+  document.getElementById('ddStatus').classList.remove('open');
+  renderBacklog();
+}
+function selectDdDept(val, label){
+  blFiltroDept = val;
+  document.getElementById('ddDeptLabel').textContent = 'Departamento: ' + label;
+  document.querySelectorAll('#ddDept .bl-dd-item').forEach(i=>i.classList.toggle('active', i.textContent===label));
+  document.getElementById('ddDept').classList.remove('open');
+  renderBacklog();
+}
+
+// Fecha dropdown ao clicar fora
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.bl-dropdown'))
+    document.querySelectorAll('.bl-dropdown').forEach(d=>d.classList.remove('open'));
+});
+
+const PRIO_CLASS  = { Alta:'bl-tag-prio-alta', Média:'bl-tag-prio-media', Baixa:'bl-tag-prio-baixa' };
+const PRIO_ORDER  = { Alta:0, Média:1, Baixa:2 };
+const STATUS_COLOR= {
+  'Incluído':   'background:var(--surface2);color:var(--text3)',
+  'Planejado':  'background:rgba(79,142,247,.12);color:var(--accent)',
+  'Em execução':'background:rgba(247,147,79,.12);color:var(--orange)',
+  'Finalizado': 'background:rgba(62,207,142,.12);color:var(--green)',
+};
+
+function renderBacklog(){
+  const box   = document.getElementById('blList');
+  const badge = document.getElementById('blBadge');
+  if(!box) return;
+  let items = [...backlog];
+  if(blFiltroStatus!=='todos') items=items.filter(i=>i.status===blFiltroStatus);
+  if(blFiltroDept!=='todos')   items=items.filter(i=>i.dept===blFiltroDept);
+  items.sort((a,b)=>{
+    const pd=(PRIO_ORDER[a.prio]||1)-(PRIO_ORDER[b.prio]||1);
+    if(pd!==0) return pd;
+    if(!a.prazo&&!b.prazo) return 0;
+    if(!a.prazo) return 1; if(!b.prazo) return -1;
+    return a.prazo.localeCompare(b.prazo);
+  });
+  badge.textContent = backlog.length;
+  if(!items.length){ box.innerHTML='<div class="empty"><p>Nenhum item no BackLog.</p></div>'; return; }
+  box.innerHTML = items.map(i=>`
+    <div class="bl-item" onclick="openBlModal('${i.id}')">
+      <div class="bl-item-header">
+        <div class="bl-item-title">${i.titulo}</div>
+        <span class="bl-tag ${PRIO_CLASS[i.prio]||''}">${i.prio}</span>
+      </div>
+      ${i.desc?`<div class="bl-item-desc">${i.desc}</div>`:''}
+      <div class="bl-item-footer">
+        <span class="bl-tag bl-tag-dept">${i.dept}</span>
+        <span class="bl-tag" style="${STATUS_COLOR[i.status]||''}">${i.status}</span>
+        ${i.prazo?`<span class="bl-tag-date">📅 ${fmtDateBR(i.prazo)}</span>`:''}
+        ${i.sprint?`<span class="bl-tag-date sprint">🏃 ${fmtDateBR(i.sprint)}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+let editingBlId=null;
+function openBlModal(id){
+  editingBlId=id||null;
+  const item=id?backlog.find(i=>i.id===id):null;
+  document.getElementById('blModalTitle').textContent=item?'Editar Item':'Novo Item';
+  document.getElementById('blTitulo').value =item?.titulo ||'';
+  document.getElementById('blDesc').value   =item?.desc   ||'';
+  document.getElementById('blDept').value   =item?.dept   ||'Administrativo';
+  document.getElementById('blPrio').value   =item?.prio   ||'Média';
+  document.getElementById('blStatus').value =item?.status ||'Incluído';
+  document.getElementById('blPrazo').value  =item?.prazo  ||'';
+  document.getElementById('blSprint').value =item?.sprint ||'';
+  document.getElementById('blDeleteBtn').style.display=item?'inline-flex':'none';
+  document.getElementById('blModal').classList.add('open');
+}
+function closeBlModal(){ document.getElementById('blModal').classList.remove('open'); }
+function saveBlItem(){
+  const titulo=document.getElementById('blTitulo').value.trim();
+  if(!titulo){alert('Preencha o título.');return;}
+  const data={titulo,
+    desc:  document.getElementById('blDesc').value.trim(),
+    dept:  document.getElementById('blDept').value,
+    prio:  document.getElementById('blPrio').value,
+    status:document.getElementById('blStatus').value,
+    prazo: document.getElementById('blPrazo').value,
+    sprint:document.getElementById('blSprint').value,
+    criadoEm:Date.now(),
+  };
+  if(editingBlId){const idx=backlog.findIndex(i=>i.id===editingBlId);if(idx>=0)backlog[idx]={...backlog[idx],...data};}
+  else backlog.unshift({id:uid(),...data});
+  saveBacklog();closeBlModal();renderBacklog();
+}
+function deleteBlItem(){
+  if(!editingBlId||!confirm('Excluir este item do BackLog?'))return;
+  backlog=backlog.filter(i=>i.id!==editingBlId);
+  saveBacklog();closeBlModal();renderBacklog();
+}
+document.getElementById('blModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeBlModal();});
 
 // ── NOVA MINUTA AVULSA ──
 function novaMinutaAvulsa(){
@@ -2645,9 +2904,11 @@ if(G.ok()){
     }
     tasks   = remote.tasks   || tasks;
     minutas = remote.minutas || minutas;
+    backlog = remote.backlog || backlog;
     lsSet('ag2_agenda',  agenda);
     lsSet('ag2_tasks',   tasks);
     lsSet('ag2_minutas', minutas);
+    lsSet('ag2_backlog', backlog);
     // NÃO atualiza ag_my_push aqui — só atualiza quando EU envio
     renderAll();
     addLog(`✅ Dados recebidos do Gist (ts: ${remoteTs})`);
