@@ -2141,13 +2141,6 @@ function gerarPDFBacklog(opcao, sprintData, ordem){
     @page{margin:1.2cm 1.5cm 1.8cm; size:A4;}
     body{font-family:Arial,sans-serif;font-size:11px;color:#1e2d3d;background:#fff;padding:20px 28px;}
 
-    /* Instrução antes de imprimir — some na impressão */
-    .print-notice{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:10px 14px;margin-bottom:20px;font-size:11px;color:#856404;display:flex;align-items:flex-start;gap:10px;}
-    .print-notice strong{display:block;margin-bottom:3px;font-size:12px;}
-    .btn-print{background:#1e2d3d;color:#fff;border:none;border-radius:5px;padding:7px 16px;font-size:11px;cursor:pointer;margin-left:auto;flex-shrink:0;font-family:Arial,sans-serif;}
-    .btn-print:hover{background:#354a5e;}
-    @media print{.print-notice{display:none!important;}}
-
     .header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #3b82c4;}
     .header-title{font-size:18px;font-weight:700;color:#1e2d3d;}
     .header-meta{font-size:10px;color:#6b7280;margin-top:4px;line-height:1.6;}
@@ -2175,20 +2168,10 @@ function gerarPDFBacklog(opcao, sprintData, ordem){
 
     @media print{
       .dept-block{page-break-inside:avoid;}
-      /* Rodapé repetido em cada página via @page não funciona em todos os browsers,
-         mas o conteúdo estático do .footer aparece na última página */
     }
   </style></head><body>
 
-  <!-- Instrução para remover cabeçalho do browser -->
-  <div class="print-notice">
-    <div>
-      <strong>⚙️ Para remover o cabeçalho e rodapé automáticos do browser:</strong>
-      <span><b>Chrome/Edge:</b> No diálogo de impressão → "Mais configurações" → desmarque <b>"Cabeçalhos e rodapés"</b><br>
-      <b>Firefox:</b> Configurações de impressão → Aparência → Cabeçalhos/Rodapés → selecione <b>"--em branco--"</b> em todos</span>
-    </div>
-    <button class="btn-print" onclick="window.print()">🖨 Imprimir</button>
-  </div>
+  <div class="header">
     <div>
       <div class="header-title">NATUSOMOS — BackLog</div>
       <div class="header-meta">
