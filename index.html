@@ -2138,11 +2138,16 @@ function gerarPDFBacklog(opcao, sprintData, ordem){
   <title>BackLog STPlan — ${dataRel}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:Arial,sans-serif;font-size:11px;color:#1e2d3d;background:#fff;padding:24px 32px;}
+    @page{margin:1.2cm 1.5cm; size:A4;}
+    @page{
+      margin-top:1.2cm;
+      margin-bottom:1.5cm;
+      @bottom-center{content:'STPlan — ${dataRel}';}
+    }
+    body{font-family:Arial,sans-serif;font-size:11px;color:#1e2d3d;background:#fff;padding:20px 28px;}
     .header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #3b82c4;}
     .header-title{font-size:18px;font-weight:700;color:#1e2d3d;}
     .header-meta{font-size:10px;color:#6b7280;margin-top:4px;line-height:1.6;}
-    .header-date{font-size:10px;color:#6b7280;text-align:right;line-height:1.6;}
     .dept-block{margin-bottom:24px;}
     .dept-title{font-size:12px;font-weight:700;color:#fff;background:#1e2d3d;padding:6px 12px;display:flex;justify-content:space-between;align-items:center;}
     .dept-count{font-weight:400;font-size:10px;opacity:.8;}
@@ -2156,7 +2161,10 @@ function gerarPDFBacklog(opcao, sprintData, ordem){
     .prio-baixa{color:#107e3e;font-weight:700;}
     .sem-valor{color:#9ca3af;font-style:italic;}
     .footer{margin-top:28px;padding-top:8px;border-top:1px solid #e4e8f2;font-size:9px;color:#9ca3af;display:flex;justify-content:space-between;}
-    @media print{.dept-block{page-break-inside:avoid;} body{padding:12px 18px;}}
+    @media print{
+      @page{margin:1cm 1.5cm;}
+      .dept-block{page-break-inside:avoid;}
+    }
   </style></head><body>
   <div class="header">
     <div>
@@ -2167,7 +2175,6 @@ function gerarPDFBacklog(opcao, sprintData, ordem){
         Total: ${itens.length} iten${itens.length!==1?'s':''}
       </div>
     </div>
-    <div class="header-date">Gerado em<br><strong>${dataRel}</strong></div>
   </div>`;
 
   deptsComItens.forEach(dept=>{
@@ -2203,13 +2210,17 @@ function gerarPDFBacklog(opcao, sprintData, ordem){
 
   html+=`<div class="footer">
     <span>NATUSOMOS — BackLog</span>
-    <span>${filtroLabel} · ${itens.length} itens · Gerado em ${dataRel}</span>
+    <span>STPlan — ${dataRel}</span>
   </div></body></html>`;
 
   const win = window.open('','_blank','width=960,height=720');
   win.document.write(html);
   win.document.close();
-  win.onload = ()=>{ win.focus(); win.print(); };
+  win.onload = ()=>{
+    win.focus();
+    // Aguarda um tick para garantir renderização
+    setTimeout(()=>win.print(), 400);
+  };
 }
 
 // ═══════════════════════════════════════════
