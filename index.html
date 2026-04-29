@@ -621,6 +621,16 @@
           <div class="bl-dd-item" onclick="selectDdDept('Vendas','Vendas')">Vendas</div>
         </div>
       </div>
+      <div class="bl-dropdown" id="ddSprint">
+        <button class="bl-dd-btn" onclick="toggleDd('ddSprint');buildSprintMenu()">
+          <span id="ddSprintLabel">Sprint: Todas</span>
+          <span class="bl-dd-arrow">▾</span>
+        </button>
+        <div class="bl-dd-menu" id="ddSprintMenu">
+          <div class="bl-dd-item active" onclick="selectDdSprint('todos','Todas')">Todas</div>
+          <div class="bl-dd-item" onclick="selectDdSprint('sem-sprint','Sem sprint')">Sem sprint</div>
+        </div>
+      </div>
     </div>
 
     <div id="blList"></div>
@@ -2253,6 +2263,25 @@ function saveBacklog(){ lsSet('ag2_backlog', backlog); if(G.ok()) syncPush(true)
 
 let blFiltroStatus = 'todos';
 let blFiltroDept   = 'todos';
+let blFiltroSprint = 'todos';
+
+function buildSprintMenu(){
+  // Coleta sprints únicas dos itens, ordena
+  const sprints = [...new Set(backlog.filter(i=>i.sprint).map(i=>i.sprint))].sort();
+  const menu = document.getElementById('ddSprintMenu');
+  function fmtBR(s){ const[y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
+  menu.innerHTML = `
+    <div class="bl-dd-item ${blFiltroSprint==='todos'?'active':''}" onclick="selectDdSprint('todos','Todas')">Todas</div>
+    <div class="bl-dd-item ${blFiltroSprint==='sem-sprint'?'active':''}" onclick="selectDdSprint('sem-sprint','Sem sprint')">Sem sprint</div>
+    ${sprints.map(s=>`<div class="bl-dd-item ${blFiltroSprint===s?'active':''}" onclick="selectDdSprint('${s}','${fmtBR(s)}')">${fmtBR(s)}</div>`).join('')}`;
+}
+
+function selectDdSprint(val, label){
+  blFiltroSprint = val;
+  document.getElementById('ddSprintLabel').textContent = 'Sprint: ' + label;
+  document.getElementById('ddSprint').classList.remove('open');
+  renderBacklog();
+}
 
 function toggleDd(id){
   const el = document.getElementById(id);
@@ -2299,6 +2328,8 @@ function renderBacklog(){
   let items = [...backlog];
   if(blFiltroStatus!=='todos') items=items.filter(i=>i.status===blFiltroStatus);
   if(blFiltroDept!=='todos')   items=items.filter(i=>i.dept===blFiltroDept);
+  if(blFiltroSprint==='sem-sprint') items=items.filter(i=>!i.sprint);
+  else if(blFiltroSprint!=='todos') items=items.filter(i=>i.sprint===blFiltroSprint);
   items.sort((a,b)=>{
     const pd=(PRIO_ORDER[a.prio]||1)-(PRIO_ORDER[b.prio]||1);
     if(pd!==0) return pd;
