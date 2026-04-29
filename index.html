@@ -913,6 +913,19 @@
       <div style="font-size:.74rem;color:var(--text3);margin-top:4px">Apenas itens com esta data de sprint serão incluídos</div>
     </div>
     <div class="form-group">
+      <label class="form-label">Departamento</label>
+      <select class="form-select" id="pdfDept">
+        <option value="todos">Todos os departamentos</option>
+        <option value="Administrativo">Administrativo</option>
+        <option value="Direção">Direção</option>
+        <option value="Logística">Logística</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Relacionamento">Relacionamento</option>
+        <option value="RH">RH</option>
+        <option value="Vendas">Vendas</option>
+      </select>
+    </div>
+    <div class="form-group">
       <label class="form-label">Ordenação dentro do departamento</label>
       <select class="form-select" id="pdfOrdem">
         <option value="prioridade">Prioridade (Alta → Média → Baixa)</option>
@@ -2054,9 +2067,9 @@ function renderEstruturada(obj, titulo, dataStr){
 // ── EXPORTAR BACKLOG PDF ──
 function exportarBacklogPDF(){
   if(!backlog.length){ alert('Nenhum item no BackLog para exportar.'); return; }
-  // Pré-preenche sprint com hoje
-  document.getElementById('pdfSprintData').value = todayStr();
+  document.getElementById('pdfSprintData').value  = todayStr();
   document.getElementById('pdfOpcaoItens').value  = 'todos';
+  document.getElementById('pdfDept').value        = 'todos';
   document.getElementById('pdfOrdem').value       = 'prioridade';
   document.getElementById('pdfSprintGrupo').style.display = 'none';
   document.getElementById('blPdfModal').classList.add('open');
@@ -2070,12 +2083,13 @@ function togglePdfSprint(){
 function confirmarExportarPDF(){
   const opcao      = document.getElementById('pdfOpcaoItens').value;
   const sprintData = document.getElementById('pdfSprintData').value;
+  const dept       = document.getElementById('pdfDept').value;
   const ordem      = document.getElementById('pdfOrdem').value;
   document.getElementById('blPdfModal').classList.remove('open');
-  gerarPDFBacklog(opcao, sprintData, ordem);
+  gerarPDFBacklog(opcao, sprintData, ordem, dept);
 }
 
-function gerarPDFBacklog(opcao, sprintData, ordem){
+function gerarPDFBacklog(opcao, sprintData, ordem, dept){
   const DEPTS = ['Administrativo','Direção','Logística','Marketing','Relacionamento','RH','Vendas'];
   const PRIO_ORDER  = { Alta:0, Média:1, Baixa:2 };
   const PRIO_COLOR  = { Alta:'#bb0000', Média:'#c44700', Baixa:'#107e3e' };
@@ -2087,6 +2101,7 @@ function gerarPDFBacklog(opcao, sprintData, ordem){
   let itens = [...backlog];
   if(opcao==='com-sprint')        itens = itens.filter(i=>i.sprint);
   if(opcao==='sprint-especifica') itens = itens.filter(i=>i.sprint===sprintData);
+  if(dept!=='todos')              itens = itens.filter(i=>i.dept===dept);
 
   if(!itens.length){
     alert('Nenhum item encontrado com os filtros selecionados.');
@@ -2125,6 +2140,7 @@ function gerarPDFBacklog(opcao, sprintData, ordem){
   let filtroLabel = 'Todos os itens';
   if(opcao==='com-sprint')        filtroLabel = 'Itens com Data Sprint definida';
   if(opcao==='sprint-especifica') filtroLabel = `Sprint: ${fmtBR(sprintData)}`;
+  if(dept!=='todos')              filtroLabel += ` · Departamento: ${dept}`;
 
   const ordemLabel = ordem==='prioridade' ? 'Prioridade (Alta → Média → Baixa)' : 'Prazo de Entrega';
 
