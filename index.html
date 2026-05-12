@@ -137,6 +137,11 @@
     #novaMinutaModal.open .modal{transform:translateY(0);}
   }
 
+  #tplPdfModal{align-items:center;padding:16px;}
+  #tplPdfModal .modal{border-radius:16px;max-width:400px;transform:translateY(16px) scale(.98);position:relative;padding:22px 22px 26px;}
+  #tplPdfModal.open .modal{transform:translateY(0) scale(1);}
+  #tplPdfModal .modal-handle{display:none;}
+
   #blPdfModal{align-items:center;padding:16px;}
   #blPdfModal .modal{border-radius:16px;max-width:440px;max-height:88vh;transform:translateY(16px) scale(.98);position:relative;padding:22px 22px 26px;}
   #blPdfModal.open .modal{transform:translateY(0) scale(1);}
@@ -937,6 +942,25 @@
   </div>
 </div>
 
+<!-- MODAL OPÇÕES PDF TEMPLATE -->
+<div class="modal-overlay" id="tplPdfModal">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close-btn" onclick="document.getElementById('tplPdfModal').classList.remove('open')" title="Fechar">✕</button>
+    <h2 style="padding-right:36px">📄 Gerar PDF — Agenda Semanal</h2>
+    <div class="form-group">
+      <label class="form-label">Eventos a incluir</label>
+      <select class="form-select" id="tplPdfFiltro">
+        <option value="todos">Todos os eventos</option>
+        <option value="diretoria">Apenas reuniões com Diretoria</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('tplPdfModal').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarTemplatePDF()">📄 Gerar PDF</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL OPÇÕES PDF BACKLOG -->
 <div class="modal-overlay" id="blPdfModal">
   <div class="modal" style="max-width:440px">
@@ -1165,6 +1189,12 @@
     <div class="form-group">
       <label class="form-label">Descrição</label>
       <input type="text" class="form-input" id="tplTitle" placeholder="Ex: Reunião de performance...">
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.85rem;color:var(--text2)">
+        <input type="checkbox" id="tplDiretoria" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+        <span>📋 Reunião com Diretoria</span>
+      </label>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeTplModal()">Cancelar</button>
@@ -1776,7 +1806,9 @@ function renderTemplate(){
     evs.forEach(ev=>{
       html+=`<div class="tpl-card">
         <div class="tpl-time"><span class="tr">${ev.start}</span>${ev.end}</div>
-        <div class="tpl-body"><div class="tpl-title">${ev.title}</div></div>
+        <div class="tpl-body">
+          <div class="tpl-title">${ev.title}${ev.diretoria?' <span style="font-size:.65rem;background:rgba(79,142,247,.15);color:var(--accent);border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:600">📋 Diretoria</span>':''}</div>
+        </div>
         <div class="tpl-actions"><button class="btn btn-ghost btn-icon btn-sm" onclick='openTplModal(${JSON.stringify(ev)},${dow})'>✏️</button></div>
       </div>`;
     });
@@ -2352,9 +2384,17 @@ function gerarPDFBacklog(opcao, sprintData, ordem, dept){
 
 // ── EXPORTAR TEMPLATE PDF ──
 function exportarTemplatePDF(){
-  const DAY_NAMES_FULL = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira'};
-  const DAY_COLORS     = {1:'#1e3a5f',2:'#1e3a5f',3:'#1e3a5f',4:'#1e3a5f',5:'#1e3a5f'};
+  document.getElementById('tplPdfFiltro').value = 'todos';
+  document.getElementById('tplPdfModal').classList.add('open');
+}
+function confirmarTemplatePDF(){
+  const filtro = document.getElementById('tplPdfFiltro').value;
+  document.getElementById('tplPdfModal').classList.remove('open');
+  gerarTemplatePDF(filtro);
+}
 
+function gerarTemplatePDF(filtro){
+  const DAY_NAMES_FULL = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira'};
   function toMin(t){ const[h,m]=t.split(':').map(Number); return h*60+m; }
   function duracao(s,e){
     const d=toMin(e)-toMin(s);
@@ -2362,22 +2402,36 @@ function exportarTemplatePDF(){
     const h=Math.floor(d/60), m=d%60;
     return h>0 ? (m>0?`${h}h${m}min`:`${h}h`) : `${m}min`;
   }
-
   const hoje = new Date();
   const dataRel = hoje.getDate().toString().padStart(2,'0')+'/'+(hoje.getMonth()+1).toString().padStart(2,'0')+'/'+hoje.getFullYear();
+  const soDiretoria = filtro==='diretoria';
+  const filtroLabel = soDiretoria ? 'Apenas reuniões com Diretoria' : 'Todos os eventos';
 
-  // Conta total de eventos
-  const total = [1,2,3,4,5].reduce((acc,d)=>acc+(template[d]||[]).length,0);
+  // Filtra eventos
+  let total = 0;
+  const diasComEvento = [1,2,3,4,5].filter(dow=>{
+    const evs = (template[dow]||[]).filter(ev=>!soDiretoria||ev.diretoria);
+    return evs.length>0;
+  });
+
+  if(soDiretoria && diasComEvento.length===0){
+    alert('Nenhum evento marcado como "Reunião com Diretoria" no template.');
+    return;
+  }
+
+  [1,2,3,4,5].forEach(dow=>{
+    total += (template[dow]||[]).filter(ev=>!soDiretoria||ev.diretoria).length;
+  });
 
   let html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-  <title>Agenda Semanal — STPlan</title>
+  <title>Agenda Semanal${soDiretoria?' — Diretoria':''} — STPlan</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     @page{margin:1.2cm 1.5cm;size:A4;}
     body{font-family:Arial,sans-serif;font-size:11px;color:#1e2d3d;background:#fff;padding:20px 28px;}
     .header{border-bottom:2px solid #3b82c4;padding-bottom:12px;margin-bottom:22px;}
     .header-title{font-size:18px;font-weight:700;color:#1e2d3d;}
-    .header-sub{font-size:10px;color:#6b7280;margin-top:3px;}
+    .header-sub{font-size:10px;color:#6b7280;margin-top:3px;line-height:1.6;}
     .day-block{margin-bottom:20px;page-break-inside:avoid;}
     .day-header{background:#1e2d3d;color:#fff;padding:7px 12px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
     .day-count{font-weight:400;font-size:10px;opacity:.75;}
@@ -2388,48 +2442,48 @@ function exportarTemplatePDF(){
     tr:nth-child(even) td{background:#f8f9fc;}
     .time{font-family:'Courier New',monospace;font-weight:700;color:#3b82c4;white-space:nowrap;}
     .dur{font-size:9px;color:#9ca3af;white-space:nowrap;}
-    .empty-day{padding:8px 10px;color:#9ca3af;font-style:italic;font-size:10px;background:#fafafa;}
+    .badge-dir{font-size:9px;background:#e8f0fe;color:#1a56db;border-radius:3px;padding:1px 5px;font-weight:600;margin-left:6px;}
     .footer{margin-top:24px;padding-top:8px;border-top:1px solid #e4e8f2;font-size:9px;color:#9ca3af;display:flex;justify-content:space-between;}
     @media print{.day-block{page-break-inside:avoid;}}
   </style></head><body>
   <div class="header">
-    <div class="header-title">Agenda Semanal — STPlan v3.0</div>
-    <div class="header-sub">Template padrão · ${total} eventos · Gerado em ${dataRel}</div>
+    <div class="header-title">Agenda Semanal${soDiretoria?' — Diretoria':''} — STPlan v3.0</div>
+    <div class="header-sub">
+      Filtro: ${filtroLabel}<br>
+      Total: ${total} evento${total!==1?'s':''} · Gerado em ${dataRel}
+    </div>
   </div>`;
 
   [1,2,3,4,5].forEach(dow=>{
-    const evs = [...(template[dow]||[])].sort((a,b)=>toMin(a.start)-toMin(b.start));
+    const evs = [...(template[dow]||[])]
+      .filter(ev=>!soDiretoria||ev.diretoria)
+      .sort((a,b)=>toMin(a.start)-toMin(b.start));
+    if(!evs.length) return;
     html+=`<div class="day-block">
       <div class="day-header">
         <span>${DAY_NAMES_FULL[dow]}</span>
         <span class="day-count">${evs.length} evento${evs.length!==1?'s':''}</span>
-      </div>`;
-
-    if(!evs.length){
-      html+=`<div class="empty-day">Sem eventos neste dia</div>`;
-    } else {
-      html+=`<table>
+      </div>
+      <table>
         <thead><tr>
-          <th style="width:13%">Início</th>
-          <th style="width:10%">Fim</th>
+          <th style="width:12%">Início</th>
+          <th style="width:9%">Fim</th>
           <th style="width:9%">Duração</th>
           <th>Atividade</th>
         </tr></thead><tbody>`;
-      evs.forEach((ev,i)=>{
-        html+=`<tr>
-          <td class="time">${ev.start}</td>
-          <td style="color:#6b7280">${ev.end}</td>
-          <td class="dur">${duracao(ev.start,ev.end)}</td>
-          <td><strong>${ev.title}</strong></td>
-        </tr>`;
-      });
-      html+=`</tbody></table>`;
-    }
-    html+=`</div>`;
+    evs.forEach(ev=>{
+      html+=`<tr>
+        <td class="time">${ev.start}</td>
+        <td style="color:#6b7280">${ev.end}</td>
+        <td class="dur">${duracao(ev.start,ev.end)}</td>
+        <td><strong>${ev.title}</strong>${ev.diretoria&&!soDiretoria?'<span class="badge-dir">📋 Diretoria</span>':''}</td>
+      </tr>`;
+    });
+    html+=`</tbody></table></div>`;
   });
 
   html+=`<div class="footer">
-    <span>STPlan v3.0 — Agenda Semanal</span>
+    <span>STPlan v3.0 — Agenda Semanal${soDiretoria?' · Diretoria':''}</span>
     <span>Gerado em ${dataRel}</span>
   </div></body></html>`;
 
@@ -2906,6 +2960,7 @@ function openTplModal(ev, dow){
   document.getElementById('tplStart').value=ev?ev.start:'08:00';
   document.getElementById('tplEnd').value=ev?ev.end:'09:00';
   document.getElementById('tplTitle').value=ev?ev.title:'';
+  document.getElementById('tplDiretoria').checked=ev?!!(ev.diretoria):false;
   document.getElementById('deleteTplBtn').style.display=ev?'inline-flex':'none';
   document.getElementById('tplModal').classList.add('open');
 }
@@ -2915,6 +2970,7 @@ function saveTplEvent(){
   const start=document.getElementById('tplStart').value;
   const end=document.getElementById('tplEnd').value;
   const title=document.getElementById('tplTitle').value.trim();
+  const diretoria=document.getElementById('tplDiretoria').checked;
   if(!title){alert('Preencha a descrição.');return;}
   if(!template[dow])template[dow]=[];
   if(editingTpl){
@@ -2922,10 +2978,10 @@ function saveTplEvent(){
       template[editingTplDow]=(template[editingTplDow]||[]).filter(e=>e.id!==editingTpl.id);
     }
     const idx=template[dow].findIndex(e=>e.id===editingTpl.id);
-    const upd={id:editingTpl.id,start,end,title};
+    const upd={id:editingTpl.id,start,end,title,diretoria};
     if(idx>=0)template[dow][idx]=upd; else template[dow].push(upd);
   } else {
-    template[dow].push({id:uid(),start,end,title});
+    template[dow].push({id:uid(),start,end,title,diretoria});
   }
   saveTemplate();closeTplModal();renderTemplate();
 }
