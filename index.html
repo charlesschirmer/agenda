@@ -1192,6 +1192,13 @@
       <input type="text" class="form-input" id="tplTitle" placeholder="Ex: Reunião de performance...">
     </div>
     <div class="form-group">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <label class="form-label" style="margin:0">Pauta padrão <span style="font-size:.72rem;color:var(--text4);font-weight:400">— será copiada ao aplicar na agenda</span></label>
+        <button class="btn btn-ghost btn-sm" type="button" onclick="expandTplPauta()" style="font-size:.72rem;padding:3px 8px">⤢ Expandir</button>
+      </div>
+      <textarea class="form-input" id="tplPauta" rows="4" placeholder="• Ponto 1&#10;• Ponto 2&#10;• Ponto 3" style="resize:vertical;line-height:1.6;font-size:.85rem"></textarea>
+    </div>
+    <div class="form-group">
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.85rem;color:var(--text2)">
         <input type="checkbox" id="tplDiretoria" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
         <span>📋 Reunião com Diretoria</span>
@@ -1570,7 +1577,10 @@ function applyTemplate(dow, dateStr) {
     : `Aplicar o template de ${dayName} na agenda de ${formatted}?`;
   if(!confirm(msg)) return;
   const tplEvs = clone(template[dow]||[]);
-  tplEvs.forEach(ev => { ev.id = uid(); });
+  tplEvs.forEach(ev => {
+    ev.id = uid();
+    // pauta já vem no clone, mantém
+  });
   agenda[dateStr] = [...existing, ...tplEvs];
   saveAgenda();
   renderAll();
@@ -1808,7 +1818,7 @@ function renderTemplate(){
       html+=`<div class="tpl-card">
         <div class="tpl-time"><span class="tr">${ev.start}</span>${ev.end}</div>
         <div class="tpl-body">
-          <div class="tpl-title">${ev.title}${ev.diretoria?' <span style="font-size:.65rem;background:rgba(79,142,247,.15);color:var(--accent);border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:600">📋 Diretoria</span>':''}</div>
+          <div class="tpl-title">${ev.title}${ev.diretoria?' <span style="font-size:.65rem;background:rgba(79,142,247,.15);color:var(--accent);border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:600">📋 Diretoria</span>':''}${ev.pauta?' <span style="font-size:.65rem;background:rgba(62,207,142,.12);color:var(--green);border-radius:4px;padding:1px 6px;margin-left:2px;font-weight:600">📝 Pauta</span>':''}</div>
         </div>
         <div class="tpl-actions"><button class="btn btn-ghost btn-icon btn-sm" onclick='openTplModal(${JSON.stringify(ev)},${dow})'>✏️</button></div>
       </div>`;
@@ -2970,6 +2980,18 @@ function iniciarTimer(){
   }, 1000);
 }
 
+function expandTplPauta(){
+  const title = document.getElementById('tplTitle').value || 'Template';
+  const text  = document.getElementById('tplPauta').value;
+  const fs    = document.getElementById('pautaFullscreen');
+  document.getElementById('pautaFsTitle').textContent = title + ' (Template)';
+  document.getElementById('pautaFsText').value = text;
+  fs.style.display = 'flex';
+  // Ao fechar, devolve para o textarea do template
+  fs._returnTo = 'tpl';
+  document.getElementById('pautaFsText').focus();
+}
+
 function expandPauta(){
   const title = document.getElementById('eventTitle').value || 'Sem título';
   const text  = document.getElementById('eventPauta').value;
@@ -2980,10 +3002,15 @@ function expandPauta(){
   document.getElementById('pautaFsText').focus();
 }
 function closePauta(){
-  // Salva o que foi editado no fullscreen de volta para o textarea normal
   const text = document.getElementById('pautaFsText').value;
-  document.getElementById('eventPauta').value = text;
-  document.getElementById('pautaFullscreen').style.display = 'none';
+  const fs   = document.getElementById('pautaFullscreen');
+  if(fs._returnTo === 'tpl'){
+    document.getElementById('tplPauta').value = text;
+    fs._returnTo = null;
+  } else {
+    document.getElementById('eventPauta').value = text;
+  }
+  fs.style.display = 'none';
 }
 
 // ═══════════════════════════════════════════
@@ -3044,6 +3071,7 @@ function openTplModal(ev, dow){
   document.getElementById('tplStart').value=ev?ev.start:'08:00';
   document.getElementById('tplEnd').value=ev?ev.end:'09:00';
   document.getElementById('tplTitle').value=ev?ev.title:'';
+  document.getElementById('tplPauta').value=ev?(ev.pauta||''):'';
   document.getElementById('tplDiretoria').checked=ev?!!(ev.diretoria):false;
   document.getElementById('deleteTplBtn').style.display=ev?'inline-flex':'none';
   document.getElementById('tplModal').classList.add('open');
@@ -3054,6 +3082,7 @@ function saveTplEvent(){
   const start=document.getElementById('tplStart').value;
   const end=document.getElementById('tplEnd').value;
   const title=document.getElementById('tplTitle').value.trim();
+  const pauta=document.getElementById('tplPauta').value.trim();
   const diretoria=document.getElementById('tplDiretoria').checked;
   if(!title){alert('Preencha a descrição.');return;}
   if(!template[dow])template[dow]=[];
@@ -3062,10 +3091,10 @@ function saveTplEvent(){
       template[editingTplDow]=(template[editingTplDow]||[]).filter(e=>e.id!==editingTpl.id);
     }
     const idx=template[dow].findIndex(e=>e.id===editingTpl.id);
-    const upd={id:editingTpl.id,start,end,title,diretoria};
+    const upd={id:editingTpl.id,start,end,title,pauta,diretoria};
     if(idx>=0)template[dow][idx]=upd; else template[dow].push(upd);
   } else {
-    template[dow].push({id:uid(),start,end,title,diretoria});
+    template[dow].push({id:uid(),start,end,title,pauta,diretoria});
   }
   saveTemplate();closeTplModal();renderTemplate();
 }
