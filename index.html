@@ -137,6 +137,11 @@
     #novaMinutaModal.open .modal{transform:translateY(0);}
   }
 
+  #semanaPdfModal{align-items:center;padding:16px;}
+  #semanaPdfModal .modal{border-radius:16px;max-width:400px;transform:translateY(16px) scale(.98);position:relative;padding:22px 22px 26px;}
+  #semanaPdfModal.open .modal{transform:translateY(0) scale(1);}
+  #semanaPdfModal .modal-handle{display:none;}
+
   #tplPdfModal{align-items:center;padding:16px;}
   #tplPdfModal .modal{border-radius:16px;max-width:400px;transform:translateY(16px) scale(.98);position:relative;padding:22px 22px 26px;}
   #tplPdfModal.open .modal{transform:translateY(0) scale(1);}
@@ -524,6 +529,7 @@
   <div id="page-semana" class="page">
     <div class="section-header">
       <div class="section-title" id="semanaLabel">Semana atual</div>
+      <button class="btn btn-ghost btn-sm" onclick="exportarSemanaPDF()">📄 Gerar PDF</button>
     </div>
     <div id="weekEvents"></div>
   </div>
@@ -943,6 +949,33 @@
   </div>
 </div>
 
+<!-- MODAL OPÇÕES PDF SEMANA -->
+<div class="modal-overlay" id="semanaPdfModal">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close-btn" onclick="document.getElementById('semanaPdfModal').classList.remove('open')" title="Fechar">✕</button>
+    <h2 style="padding-right:36px">📄 Gerar PDF — Semana</h2>
+    <div class="form-group">
+      <label class="form-label">Eventos a incluir</label>
+      <select class="form-select" id="semanaPdfFiltro">
+        <option value="todos">Todos os eventos</option>
+        <option value="diretoria">Apenas reuniões com Diretoria</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Semanas a incluir</label>
+      <select class="form-select" id="semanaPdfSemanas">
+        <option value="1">Semana atual</option>
+        <option value="2">Semana atual + próxima</option>
+        <option value="3">3 semanas (atual + 2)</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('semanaPdfModal').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarSemanaPDF()">📄 Gerar PDF</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL OPÇÕES PDF TEMPLATE -->
 <div class="modal-overlay" id="tplPdfModal">
   <div class="modal" style="max-width:400px">
@@ -1148,6 +1181,12 @@
     <div class="form-group">
       <label class="form-label">Descrição</label>
       <input type="text" class="form-input" id="eventTitle" placeholder="Ex: Reunião com gerente...">
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.85rem;color:var(--text2)">
+        <input type="checkbox" id="eventDiretoria" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+        <span>📋 Reunião com Diretoria</span>
+      </label>
     </div>
     <div class="form-group">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
@@ -1619,7 +1658,7 @@ function eCard(ev, dateStr){
   return `<div class="event-card ${cur?'current':''}" style="${past?'opacity:.72':''}">
     <div class="event-time"><span class="tr">${ev.start}</span>${ev.end}</div>
     <div class="event-body">
-      <div class="event-title">${ev.title}${hasPauta?' <span style="font-size:.65rem;color:var(--accent);margin-left:4px">📋</span>':''}</div>
+      <div class="event-title">${ev.title}${hasPauta?' <span style="font-size:.65rem;color:var(--accent);margin-left:4px">📋</span>':''}${ev.diretoria?' <span style="font-size:.65rem;background:rgba(79,142,247,.15);color:var(--accent);border-radius:4px;padding:1px 5px;margin-left:2px;font-weight:600">Dir.</span>':''}</div>
     </div>
     <div class="event-actions"><button class="btn btn-ghost btn-icon btn-sm" onclick='openEventModal(${JSON.stringify(ev)},"${dateStr}")'>✏️</button></div>
   </div>`;
@@ -2393,6 +2432,135 @@ function gerarPDFBacklog(opcao, sprintData, ordem, dept){
   win.onload = ()=>{ win.focus(); };
 }
 
+// ── EXPORTAR SEMANA PDF ──
+function exportarSemanaPDF(){
+  document.getElementById('semanaPdfFiltro').value  = 'todos';
+  document.getElementById('semanaPdfSemanas').value = '1';
+  document.getElementById('semanaPdfModal').classList.add('open');
+}
+function confirmarSemanaPDF(){
+  const filtro  = document.getElementById('semanaPdfFiltro').value;
+  const semanas = parseInt(document.getElementById('semanaPdfSemanas').value);
+  document.getElementById('semanaPdfModal').classList.remove('open');
+  gerarSemanaPDF(filtro, semanas);
+}
+
+function gerarSemanaPDF(filtro, numSemanas){
+  const DAY_NAMES = {0:'Domingo',1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira',6:'Sábado'};
+  const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+  function toMin(t){ const[h,m]=t.split(':').map(Number); return h*60+m; }
+  function duracao(s,e){
+    const d=toMin(e)-toMin(s); if(d<=0) return '';
+    const h=Math.floor(d/60),m=d%60;
+    return h>0?(m>0?`${h}h${m}min`:`${h}h`):`${m}min`;
+  }
+  function fmtDateFull(str){
+    const[y,mo,d]=str.split('-');
+    const dt=new Date(+y,+mo-1,+d);
+    return `${DAY_NAMES[dt.getDay()]}, ${+d} de ${MESES[+mo-1]} de ${y}`;
+  }
+
+  // Coleta todas as datas das semanas solicitadas
+  const today  = new Date(); today.setHours(0,0,0,0);
+  const dow    = today.getDay();
+  const monday = new Date(today); monday.setDate(today.getDate() - (dow===0?6:dow-1));
+
+  const dates = [];
+  for(let w=0; w<numSemanas; w++){
+    for(let d=0; d<5; d++){   // seg a sex
+      const dt = new Date(monday); dt.setDate(monday.getDate() + w*7 + d);
+      dates.push(dt.toISOString().slice(0,10));
+    }
+  }
+
+  const soDiretoria = filtro==='diretoria';
+  const filtroLabel = soDiretoria ? 'Apenas reuniões com Diretoria' : 'Todos os eventos';
+  const hoje   = new Date();
+  const dataRel= hoje.getDate().toString().padStart(2,'0')+'/'+(hoje.getMonth()+1).toString().padStart(2,'0')+'/'+hoje.getFullYear();
+
+  // Filtra dias com eventos
+  const diasComEvs = dates.filter(d=>{
+    const evs = (agenda[d]||[]).filter(ev=>!soDiretoria||ev.diretoria);
+    return evs.length>0;
+  });
+
+  if(!diasComEvs.length){
+    alert(soDiretoria ? 'Nenhum evento marcado como "Reunião com Diretoria" nas semanas selecionadas.' : 'Nenhum evento nas semanas selecionadas.');
+    return;
+  }
+
+  const totalEvs = diasComEvs.reduce((acc,d)=>acc+(agenda[d]||[]).filter(ev=>!soDiretoria||ev.diretoria).length,0);
+
+  let html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Agenda da Semana${soDiretoria?' — Diretoria':''}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    @page{margin:1.2cm 1.5cm;size:A4;}
+    body{font-family:Arial,sans-serif;font-size:11px;color:#1e2d3d;background:#fff;padding:20px 28px;}
+    .header{border-bottom:2px solid #3b82c4;padding-bottom:12px;margin-bottom:22px;}
+    .header-title{font-size:18px;font-weight:700;color:#1e2d3d;}
+    .header-sub{font-size:10px;color:#6b7280;margin-top:3px;line-height:1.6;}
+    .day-block{margin-bottom:20px;page-break-inside:avoid;}
+    .day-header{background:#1e2d3d;color:#fff;padding:7px 12px;font-size:11px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+    .day-count{font-weight:400;font-size:10px;opacity:.75;}
+    table{width:100%;border-collapse:collapse;font-size:10.5px;}
+    th{background:#edf0f7;color:#354a5e;font-weight:700;padding:5px 10px;text-align:left;border-bottom:2px solid #c8cfe0;}
+    td{padding:6px 10px;border-bottom:1px solid #e4e8f2;vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    tr:nth-child(even) td{background:#f8f9fc;}
+    .time{font-family:'Courier New',monospace;font-weight:700;color:#3b82c4;white-space:nowrap;}
+    .dur{font-size:9px;color:#9ca3af;white-space:nowrap;}
+    .badge-dir{font-size:9px;background:#e8f0fe;color:#1a56db;border-radius:3px;padding:1px 5px;font-weight:600;margin-left:6px;}
+    .footer{margin-top:24px;padding-top:8px;border-top:1px solid #e4e8f2;font-size:9px;color:#9ca3af;display:flex;justify-content:space-between;}
+    @media print{.day-block{page-break-inside:avoid;}}
+  </style></head><body>
+  <div class="header">
+    <div class="header-title">Agenda da Semana${soDiretoria?' — Diretoria':''}</div>
+    <div class="header-sub">
+      Filtro: ${filtroLabel} · ${numSemanas} semana${numSemanas>1?'s':''}<br>
+      Total: ${totalEvs} evento${totalEvs!==1?'s':''} · Gerado em ${dataRel}
+    </div>
+  </div>`;
+
+  diasComEvs.forEach(dateStr=>{
+    const evs = [...(agenda[dateStr]||[])]
+      .filter(ev=>!soDiretoria||ev.diretoria)
+      .sort((a,b)=>toMin(a.start)-toMin(b.start));
+    html+=`<div class="day-block">
+      <div class="day-header">
+        <span>${fmtDateFull(dateStr)}</span>
+        <span class="day-count">${evs.length} evento${evs.length!==1?'s':''}</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th style="width:12%">Início</th>
+          <th style="width:9%">Fim</th>
+          <th style="width:9%">Duração</th>
+          <th>Atividade</th>
+        </tr></thead><tbody>`;
+    evs.forEach(ev=>{
+      html+=`<tr>
+        <td class="time">${ev.start}</td>
+        <td style="color:#6b7280">${ev.end}</td>
+        <td class="dur">${duracao(ev.start,ev.end)}</td>
+        <td><strong>${ev.title}</strong>${ev.diretoria&&!soDiretoria?'<span class="badge-dir">📋 Diretoria</span>':''}</td>
+      </tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  });
+
+  html+=`<div class="footer">
+    <span>STPlan v3.0 — Agenda da Semana${soDiretoria?' · Diretoria':''}</span>
+    <span>Gerado em ${dataRel}</span>
+  </div></body></html>`;
+
+  const win = window.open('','_blank','width=820,height=700');
+  win.document.write(html);
+  win.document.close();
+  win.onload=()=>{ win.focus(); win.print(); };
+}
+
 // ── EXPORTAR TEMPLATE PDF ──
 function exportarTemplatePDF(){
   document.getElementById('tplPdfFiltro').value = 'todos';
@@ -3025,6 +3193,7 @@ function openEventModal(ev, dateStr){
   document.getElementById('eventEnd').value=ev?ev.end:'09:00';
   document.getElementById('eventTitle').value=ev?ev.title:'';
   document.getElementById('eventPauta').value=ev?(ev.pauta||''):'';
+  document.getElementById('eventDiretoria').checked=ev?!!(ev.diretoria):false;
   document.getElementById('deleteEventBtn').style.display=ev?'inline-flex':'none';
   document.getElementById('eventModal').classList.add('open');
 }
@@ -3040,6 +3209,7 @@ function saveEvent(){
   const end=document.getElementById('eventEnd').value;
   const title=document.getElementById('eventTitle').value.trim();
   const pauta=document.getElementById('eventPauta').value.trim();
+  const diretoria=document.getElementById('eventDiretoria').checked;
   if(!title){alert('Preencha a descrição.');return;}
   if(!agenda[dateStr])agenda[dateStr]=[];
   if(editingEvent){
@@ -3047,10 +3217,10 @@ function saveEvent(){
       agenda[editingEventDate]=(agenda[editingEventDate]||[]).filter(e=>e.id!==editingEvent.id);
     }
     const idx=agenda[dateStr].findIndex(e=>e.id===editingEvent.id);
-    const upd={id:editingEvent.id,start,end,title,pauta};
+    const upd={id:editingEvent.id,start,end,title,pauta,diretoria};
     if(idx>=0)agenda[dateStr][idx]=upd; else agenda[dateStr].push(upd);
   } else {
-    agenda[dateStr].push({id:uid(),start,end,title,pauta});
+    agenda[dateStr].push({id:uid(),start,end,title,pauta,diretoria});
   }
   afterSaveEvent(dateStr);
 }
