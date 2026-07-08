@@ -412,6 +412,131 @@
   @media(max-width:600px){.mf-item-actions{opacity:1;}}
   body.light .mf-item{background:#f4f6fb;border-color:#c0c8d8;}
 
+  /* ── POST-IT ── */
+  #page-postit{padding:0;max-width:none;overflow:hidden;}
+
+  /* Barra de cores */
+  .pi-toolbar{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 18px;
+    background:rgba(255,255,255,.55);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid rgba(0,0,0,.1);
+    position:sticky;top:0;z-index:50;
+    flex-wrap:wrap;
+  }
+  .pi-toolbar-label{font-size:.72rem;font-weight:600;color:rgba(0,0,0,.45);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;}
+  .pi-swatch{
+    width:28px;height:28px;border-radius:4px;cursor:pointer;
+    border:2px solid rgba(0,0,0,.08);
+    box-shadow:0 2px 4px rgba(0,0,0,.18);
+    transition:transform .12s,box-shadow .12s;
+    position:relative;flex-shrink:0;
+  }
+  .pi-swatch::after{
+    content:'';position:absolute;bottom:0;right:0;
+    width:8px;height:8px;
+    background:linear-gradient(225deg,rgba(0,0,0,.15) 50%,transparent 50%);
+  }
+  .pi-swatch:hover{transform:scale(1.25);box-shadow:0 4px 8px rgba(0,0,0,.25);}
+
+  /* Quadro livre */
+  .postit-board{
+    position:relative;
+    width:100%;
+    min-height:calc(100vh - 145px);
+    overflow:auto;
+  }
+
+  /* Post-it individual */
+  .postit{
+    position:absolute;
+    width:200px;
+    min-height:200px;
+    display:flex;flex-direction:column;
+    border-radius:2px 2px 2px 2px;
+    box-shadow:
+      3px 3px 0 rgba(0,0,0,.04),
+      4px 8px 16px rgba(0,0,0,.22),
+      0 1px 2px rgba(0,0,0,.12);
+    cursor:grab;
+    user-select:none;
+    transition:box-shadow .15s;
+    z-index:1;
+  }
+  .postit.dragging{
+    cursor:grabbing;
+    box-shadow:6px 12px 32px rgba(0,0,0,.35);
+    z-index:999;
+    transform:rotate(2deg) scale(1.04);
+  }
+  /* Dobra realista no canto inferior direito */
+  .postit::before{
+    content:'';
+    position:absolute;bottom:0;right:0;
+    width:0;height:0;
+    border-style:solid;
+    border-width:0 0 22px 22px;
+    border-color:transparent transparent rgba(0,0,0,.18) transparent;
+    z-index:2;
+  }
+  .postit::after{
+    content:'';
+    position:absolute;bottom:0;right:0;
+    width:22px;height:22px;
+    background:linear-gradient(225deg,rgba(0,0,0,.06) 0%,rgba(255,255,255,.35) 100%);
+    z-index:1;
+  }
+
+  /* Fita adesiva no topo */
+  .postit-tape{
+    position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+    width:50px;height:20px;
+    background:rgba(255,255,255,.55);
+    border-radius:2px;
+    box-shadow:0 1px 3px rgba(0,0,0,.12);
+    z-index:3;
+  }
+
+  /* Área de texto */
+  .postit-body{
+    flex:1;display:flex;flex-direction:column;padding:18px 12px 24px;
+  }
+  .postit-text{
+    flex:1;border:none;outline:none;resize:none;
+    background:transparent;
+    font-family:'DM Sans',sans-serif;
+    font-size:.87rem;line-height:1.65;
+    color:rgba(0,0,0,.72);
+    width:100%;min-height:140px;
+    cursor:text;
+  }
+  .postit-text::placeholder{color:rgba(0,0,0,.22);}
+
+  /* Botão excluir */
+  .postit-del{
+    position:absolute;top:4px;right:5px;
+    background:rgba(0,0,0,.0);border:none;
+    width:22px;height:22px;border-radius:50%;
+    cursor:pointer;font-size:.65rem;
+    color:rgba(0,0,0,.0);
+    display:flex;align-items:center;justify-content:center;
+    transition:all .15s;z-index:4;
+  }
+  .postit:hover .postit-del{background:rgba(0,0,0,.12);color:rgba(0,0,0,.45);}
+  .postit-del:hover{background:rgba(0,0,0,.25) !important;color:rgba(0,0,0,.8) !important;}
+
+  /* Cores realistas dos Post-Its */
+  .pi-salmon  {background:linear-gradient(150deg,#f4a47a,#e8895d);}
+  .pi-cyan    {background:linear-gradient(150deg,#6fd4e8,#45c3db);}
+  .pi-pink    {background:linear-gradient(150deg,#f0839c,#e86080);}
+  .pi-yellow  {background:linear-gradient(150deg,#f7e95a,#f0d930);}
+  .pi-cream   {background:linear-gradient(150deg,#f5eecc,#ede4b0);}
+  .pi-skyblue {background:linear-gradient(150deg,#a8d8f0,#85c4e8);}
+  .pi-peach   {background:linear-gradient(150deg,#f2b899,#e8987a);}
+  .pi-green   {background:linear-gradient(150deg,#7de87a,#55d852);}
+  .pi-teal    {background:linear-gradient(150deg,#98c8c0,#78b0a8);}
+
   /* MINUTA TOOLBAR */
   .minuta-toolbar{display:flex;align-items:center;gap:4px;padding:7px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap;}
   .minuta-toolbar-label{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text4);margin-right:2px;white-space:nowrap;}
@@ -576,6 +701,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
   <button class="tab" onclick="showPage('tarefas')">Tarefas</button>
   <button class="tab" onclick="showPage('pipeline')">Pipeline</button>
   <button class="tab" onclick="showPage('backlog')">BackLog</button>
+  <button class="tab" onclick="showPage('postit')">Post-It</button>
   <button class="tab" onclick="showPage('minuta')">Minuta</button>
   <button class="tab" onclick="showPage('template')">Template</button>
   <button class="tab" onclick="showPage('sync')">⚙️ Config</button>
@@ -680,6 +806,24 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
       <p style="max-width:700px;margin:0 auto 16px;font-size:.8rem;color:var(--text3)">Cards arquivados. Clique em <strong style="color:var(--text)">↩ Restaurar</strong> para devolver ao Pipeline.</p>
       <div class="finalizado-wrap" id="finalizadoList"></div>
     </div>
+  </div>
+
+  <!-- POST-IT -->
+  <div id="page-postit" class="page">
+    <div class="pi-toolbar">
+      <span class="pi-toolbar-label">+ Post-It</span>
+      <div class="pi-swatch" style="background:linear-gradient(150deg,#f4a47a,#e8895d)" onclick="addPostIt('pi-salmon')" title="Salmão"></div>
+      <div class="pi-swatch" style="background:linear-gradient(150deg,#6fd4e8,#45c3db)" onclick="addPostIt('pi-cyan')" title="Ciano"></div>
+      <div class="pi-swatch" style="background:linear-gradient(150deg,#f0839c,#e86080)" onclick="addPostIt('pi-pink')" title="Rosa"></div>
+      <div class="pi-swatch" style="background:linear-gradient(150deg,#f7e95a,#f0d930)" onclick="addPostIt('pi-yellow')" title="Amarelo"></div>
+      <div class="pi-swatch" style="background:linear-gradient(150deg,#f5eecc,#ede4b0)" onclick="addPostIt('pi-cream')" title="Creme"></div>
+      <div class="pi-swatch" style="background:linear-gradient(150deg,#a8d8f0,#85c4e8)" onclick="addPostIt('pi-skyblue')" title="Azul claro"></div>
+      <div class="pi-swatch" style="background:linear-gradient(150deg,#f2b899,#e8987a)" onclick="addPostIt('pi-peach')" title="Pêssego"></div>
+      <div class="pi-swatch" style="background:linear-gradient(150deg,#7de87a,#55d852)" onclick="addPostIt('pi-green')" title="Verde"></div>
+      <div class="pi-swatch" style="background:linear-gradient(150deg,#98c8c0,#78b0a8)" onclick="addPostIt('pi-teal')" title="Verde-água"></div>
+      <span style="font-size:.72rem;color:rgba(0,0,0,.3);margin-left:8px">Arraste os Post-Its livremente</span>
+    </div>
+    <div class="postit-board" id="postitBoard"></div>
   </div>
 
   <!-- BACKLOG -->
@@ -1541,7 +1685,7 @@ async function syncPush(silent=false){
   if(!G.ok())return;
   if(!silent)setSyncUI('busy','Enviando…');
   try{
-    const payload={agenda,template,tasks,minutas,backlog,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
+    const payload={agenda,template,tasks,minutas,backlog,postits,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
     const r=await fetch(`https://api.github.com/gists/${G.id()}`,{
       method:'PATCH',
       headers:{'Authorization':'token '+G.token(),'Content-Type':'application/json'},
@@ -1579,10 +1723,12 @@ async function syncPull(){
     tasks    = remote.tasks     || tasks;
     minutas  = remote.minutas   || minutas;
     backlog  = remote.backlog   || backlog;
+    postits  = remote.postits   || postits;
     lsSet('ag2_agenda',   agenda);
     lsSet('ag2_tasks',    tasks);
     lsSet('ag2_minutas',  minutas);
     lsSet('ag2_backlog',  backlog);
+    lsSet('ag2_postits',  postits);
     // Não atualiza ag_my_push no pull manual — só push atualiza
     renderAll();
     setSyncUI('ok','Sincronizado ✓');
@@ -1619,7 +1765,7 @@ async function conectar(){
       if(!ck.ok)throw new Error('Gist ID não encontrado.');
       gistId=existId;
     } else {
-      const payload={agenda,template,tasks,minutas,backlog,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
+      const payload={agenda,template,tasks,minutas,backlog,postits,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
       const cr=await fetch('https://api.github.com/gists',{
         method:'POST',
         headers:{'Authorization':'token '+token,'Content-Type':'application/json'},
@@ -1952,7 +2098,7 @@ function renderTemplate(){
 //  PAGES
 // ═══════════════════════════════════════════
 let currentPage='hoje';
-const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,pipeline:4,backlog:5,minuta:6,template:7,sync:8};
+const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,pipeline:4,backlog:5,postit:6,minuta:7,template:8,sync:9};
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===PAGE_IDX[id]));
@@ -1964,6 +2110,7 @@ function showPage(id){
   if(id==='tarefas') renderTasks();
   if(id==='pipeline')renderPipeline();
   if(id==='backlog') renderBacklog();
+  if(id==='postit')  renderPostIts();
   if(id==='minuta')  renderMinuta();
   if(id==='template')renderTemplate();
   if(id==='sync')    { renderSyncPage(); atualizarBotoesTema(lsRaw('ag_tema')||'dark'); }
@@ -2750,6 +2897,131 @@ function gerarTemplatePDF(filtro){
   win.document.write(html);
   win.document.close();
   win.onload = ()=>{ win.focus(); win.print(); };
+}
+
+// ═══════════════════════════════════════════
+//  POST-IT
+// ═══════════════════════════════════════════
+const PI_ROTATIONS = [-2.5,-1.8,-1.2,-0.6,0.5,0.9,1.5,2.1,-0.3,1.8,-1.5,0.7];
+let piMaxZ = 10;
+
+let postits = lsGet('ag2_postits', []);
+function savePostits(){ lsSet('ag2_postits', postits); if(G.ok()) syncPush(true); }
+
+function escHtml(str){ return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderPostIts(){
+  const board = document.getElementById('postitBoard');
+  if(!board) return;
+  board.innerHTML = '';
+  postits.forEach(p => board.appendChild(createPostitEl(p)));
+}
+
+function createPostitEl(p){
+  const rot = p.rot !== undefined ? p.rot : PI_ROTATIONS[parseInt(p.id.slice(-4),16) % PI_ROTATIONS.length];
+  const div = document.createElement('div');
+  div.className = 'postit ' + (p.cor||'pi-yellow');
+  div.id = 'pi_' + p.id;
+  div.style.cssText = `left:${p.x||60}px;top:${p.y||70}px;transform:rotate(${rot}deg);z-index:${p.z||1}`;
+  div.innerHTML = `
+    <div class="postit-tape"></div>
+    <button class="postit-del" onclick="deletePostIt('${p.id}')">✕</button>
+    <div class="postit-body">
+      <textarea class="postit-text" placeholder="Escreva aqui..."
+        onblur="savePostitText('${p.id}',this.value)"
+        onmousedown="event.stopPropagation()"
+        ontouchstart="event.stopPropagation()"
+      >${escHtml(p.texto||'')}</textarea>
+    </div>`;
+  div.addEventListener('mousedown', e=>{
+    if(e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON') return;
+    startDragPostit(e,div,p);
+  });
+  div.addEventListener('touchstart', e=>{
+    if(e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON') return;
+    startDragPostitTouch(e,div,p);
+  },{passive:false});
+  return div;
+}
+
+function bringToFront(p,el){ piMaxZ++; p.z=piMaxZ; el.style.zIndex=piMaxZ; }
+
+function startDragPostit(e,el,p){
+  e.preventDefault();
+  bringToFront(p,el);
+  const board=document.getElementById('postitBoard');
+  const rect=board.getBoundingClientRect();
+  const elRect=el.getBoundingClientRect();
+  const offX=e.clientX-elRect.left, offY=e.clientY-elRect.top;
+  const rot=p.rot!==undefined?p.rot:PI_ROTATIONS[parseInt(p.id.slice(-4),16)%PI_ROTATIONS.length];
+  el.classList.add('dragging');
+  function onMove(ev){
+    el.style.left=Math.max(0,ev.clientX-rect.left-offX)+'px';
+    el.style.top =Math.max(0,ev.clientY-rect.top -offY)+'px';
+  }
+  function onUp(){
+    el.classList.remove('dragging');
+    el.style.transform=`rotate(${rot}deg)`;
+    p.x=parseInt(el.style.left); p.y=parseInt(el.style.top);
+    savePostits();
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+  }
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+}
+
+function startDragPostitTouch(e,el,p){
+  e.preventDefault();
+  bringToFront(p,el);
+  const board=document.getElementById('postitBoard');
+  const rect=board.getBoundingClientRect();
+  const elRect=el.getBoundingClientRect();
+  const t0=e.touches[0];
+  const offX=t0.clientX-elRect.left, offY=t0.clientY-elRect.top;
+  const rot=p.rot!==undefined?p.rot:PI_ROTATIONS[parseInt(p.id.slice(-4),16)%PI_ROTATIONS.length];
+  el.classList.add('dragging');
+  function onMove(ev){
+    const t=ev.touches[0];
+    el.style.left=Math.max(0,t.clientX-rect.left-offX)+'px';
+    el.style.top =Math.max(0,t.clientY-rect.top -offY)+'px';
+  }
+  function onEnd(){
+    el.classList.remove('dragging');
+    el.style.transform=`rotate(${rot}deg)`;
+    p.x=parseInt(el.style.left); p.y=parseInt(el.style.top);
+    savePostits();
+    document.removeEventListener('touchmove',onMove);
+    document.removeEventListener('touchend',onEnd);
+  }
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('touchend',onEnd);
+}
+
+function addPostIt(cor){
+  const offset=(postits.length%8)*30;
+  const rot=PI_ROTATIONS[postits.length%PI_ROTATIONS.length];
+  const novo={id:uid(),cor:cor||'pi-yellow',texto:'',x:60+offset,y:80+offset,rot,z:++piMaxZ,criadoEm:Date.now()};
+  postits.unshift(novo);
+  savePostits();
+  const board=document.getElementById('postitBoard');
+  if(board){
+    const el=createPostitEl(novo);
+    board.appendChild(el);
+    setTimeout(()=>{ const ta=el.querySelector('textarea'); if(ta) ta.focus(); },50);
+  }
+}
+
+function deletePostIt(id){
+  postits=postits.filter(p=>p.id!==id);
+  savePostits();
+  const el=document.getElementById('pi_'+id);
+  if(el) el.remove();
+}
+
+function savePostitText(id,texto){
+  const p=postits.find(p=>p.id===id);
+  if(p&&p.texto!==texto){p.texto=texto;savePostits();}
 }
 
 // ═══════════════════════════════════════════
@@ -3855,10 +4127,12 @@ if(G.ok()){
     tasks   = remote.tasks   || tasks;
     minutas = remote.minutas || minutas;
     backlog = remote.backlog || backlog;
+    postits = remote.postits || postits;
     lsSet('ag2_agenda',  agenda);
     lsSet('ag2_tasks',   tasks);
     lsSet('ag2_minutas', minutas);
     lsSet('ag2_backlog', backlog);
+    lsSet('ag2_postits', postits);
     // NÃO atualiza ag_my_push aqui — só atualiza quando EU envio
     renderAll();
     addLog(`✅ Dados recebidos do Gist (ts: ${remoteTs})`);
