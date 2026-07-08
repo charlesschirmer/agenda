@@ -628,6 +628,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
       <div class="section-header" style="max-width:700px;margin-left:auto;margin-right:auto">
         <div class="section-title">Pipeline</div>
         <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="showStandBy()">⏸ StandBy</button>
           <button class="btn btn-ghost btn-sm" onclick="showFinalizado()">📦 Arquivo</button>
           <button class="btn btn-primary btn-sm" onclick="openCardModal(null)">+ Card</button>
         </div>
@@ -658,6 +659,16 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
           <div class="pipeline-add" onclick="openCardModal(null,'done')">+ Adicionar card</div>
         </div>
       </div>
+    </div>
+
+    <!-- TELA STANDBY -->
+    <div id="standbyView" style="display:none" class="pipeline-outer">
+      <div class="section-header" style="max-width:700px;margin-left:auto;margin-right:auto">
+        <div class="section-title">⏸ StandBy <span class="badge" id="cnt-standby" style="background:var(--orange)">0</span></div>
+        <button class="btn btn-ghost btn-sm" onclick="hideStandBy()">← Voltar ao Pipeline</button>
+      </div>
+      <p style="max-width:700px;margin:0 auto 16px;font-size:.8rem;color:var(--text3)">Cards em espera. Clique em <strong style="color:var(--text)">↩ Retornar</strong> para devolver ao Pipeline na fase desejada.</p>
+      <div class="finalizado-wrap" id="standbyList"></div>
     </div>
 
     <!-- TELA FINALIZADO (oculta por padrão) -->
@@ -1211,7 +1222,8 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
         <button class="btn btn-ghost" onclick="closeCardModal()">Cancelar</button>
         <button class="btn btn-primary" onclick="saveCard()">Salvar</button>
       </div>
-      <div style="margin-top:10px;text-align:center">
+      <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-sm" id="standbyCardBtn" onclick="enviarStandBy()" style="display:none;background:rgba(247,147,79,.12);color:var(--orange);border:1px solid rgba(247,147,79,.3)">⏸ StandBy</button>
         <button class="btn btn-danger btn-sm" id="deleteCardBtn" onclick="deleteCard()" style="display:none">Excluir card</button>
       </div>
     </div>
@@ -3356,7 +3368,7 @@ function renderPipeline(){
   const fases = ['todo','doing','done'];
   fases.forEach(fase=>{
     const cards = tasks
-      .filter(t=>(t.fase||'todo')===fase)
+      .filter(t=>(t.fase||'todo')===fase) // standby e finalizado ficam excluídos
       .sort((a,b)=>{
         if(!a.dataExec && !b.dataExec) return 0;
         if(!a.dataExec) return 1;  // sem data vai para o final
@@ -3412,10 +3424,79 @@ function moverFase(id, novaFase){
   renderTasks();
 }
 
+// ── STANDBY ──
+function enviarStandBy(){
+  if(!editingCardId) return;
+  const t = tasks.find(t=>t.id===editingCardId);
+  if(!t) return;
+  t.fase = 'standby'; t.done = false;
+  saveTasks(); closeCardModal(); renderPipeline();
+}
+
+function showStandBy(){
+  document.getElementById('pipelineWrap').style.display  = 'none';
+  document.getElementById('finalizadoView').style.display= 'none';
+  document.getElementById('standbyView').style.display   = 'block';
+  renderStandBy();
+}
+function hideStandBy(){
+  document.getElementById('standbyView').style.display   = 'none';
+  document.getElementById('pipelineWrap').style.display  = 'flex';
+  renderPipeline();
+}
+
+function renderStandBy(){
+  const box = document.getElementById('standbyList');
+  if(!box) return;
+  const itens = tasks.filter(t=>(t.fase||'todo')==='standby')
+    .sort((a,b)=>{
+      if(!a.dataExec&&!b.dataExec) return 0;
+      if(!a.dataExec) return 1; if(!b.dataExec) return -1;
+      return a.dataExec.localeCompare(b.dataExec);
+    });
+  document.getElementById('cnt-standby').textContent = itens.length;
+  if(!itens.length){
+    box.innerHTML='<div class="empty"><p>Nenhum card em StandBy.</p></div>';
+    return;
+  }
+  box.innerHTML = itens.map(t=>`
+    <div class="finalizado-card">
+      <div style="font-size:1.2rem;flex-shrink:0">⏸</div>
+      <div class="finalizado-card-body">
+        <div class="finalizado-card-title">${t.title}</div>
+        <div class="finalizado-card-meta">
+          ${t.cat?`<span class="p-card-cat">${t.cat}</span>`:''}
+          ${t.dataExec?`<span class="p-card-date exec">▶ ${fmtDateBR(t.dataExec)}</span>`:''}
+          ${t.dataEntrega?`<span class="p-card-date entrega">⏱ ${fmtDateBR(t.dataEntrega)}</span>`:''}
+          ${(t.followups||[]).length?`<span class="p-card-cat" style="color:var(--accent)">🔄 ${t.followups.length}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+        <select class="form-select" id="retornoFase_${t.id}" style="font-size:.75rem;padding:4px 8px">
+          <option value="todo">→ A Fazer</option>
+          <option value="doing">→ Fazendo</option>
+          <option value="done">→ Feito</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="retornarStandBy('${t.id}')">↩ Retornar</button>
+        <button class="btn btn-danger btn-sm" onclick="excluirCard('${t.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function retornarStandBy(id){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  const sel = document.getElementById('retornoFase_'+id);
+  t.fase = sel ? sel.value : 'todo';
+  t.done = t.fase==='done';
+  saveTasks(); renderStandBy(); renderPipeline();
+}
+
 // ── FINALIZADO (ARQUIVO) ──
 function showFinalizado(){
-  document.getElementById('pipelineWrap').style.display='none';
-  document.getElementById('finalizadoView').style.display='block';
+  document.getElementById('pipelineWrap').style.display  = 'none';
+  document.getElementById('standbyView').style.display   = 'none';
+  document.getElementById('finalizadoView').style.display= 'block';
   renderFinalizado();
 }
 function hideFinalizado(){
@@ -3608,6 +3689,7 @@ function openCardModal(id, fase='todo'){
   document.getElementById('cardEntrega').value=t?(t.dataEntrega||''):'';
   document.getElementById('cardFase').value=t?(t.fase||'todo'):fase;
   document.getElementById('deleteCardBtn').style.display=t?'inline-flex':'none';
+  document.getElementById('standbyCardBtn').style.display=(t&&(t.fase||'todo')!=='standby')?'inline-flex':'none';
   document.getElementById('fuTexto').value='';
   // Reset para aba Dados sempre que abre
   switchCardTab('dados');
