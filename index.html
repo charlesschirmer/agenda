@@ -949,6 +949,38 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
         </button>
       </div>
     </div>
+
+    <!-- GOOGLE CALENDAR -->
+    <div class="sync-card" style="margin-bottom:14px">
+      <h3>📅 Google Agenda</h3>
+      <p style="margin-bottom:12px">Envio automático para o Google ao criar, editar ou excluir eventos. <strong style="color:var(--text)">Unidirecional</strong> — STPlan → Google.</p>
+      <div id="gcalDisconnected">
+        <div class="sync-card" style="background:rgba(79,142,247,.06);border-color:rgba(79,142,247,.25);margin-bottom:12px">
+          <p style="margin-bottom:8px"><strong style="color:var(--text)">Configuração (1 vez):</strong></p>
+          <ol>
+            <li>Acesse <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a></li>
+            <li>Crie um projeto → ative <strong>Google Calendar API</strong></li>
+            <li>Credenciais → OAuth 2.0 Client ID → tipo <strong>Web application</strong></li>
+            <li>Em "Origens autorizadas" adicione a URL do seu GitHub Pages</li>
+            <li>Copie o <strong>Client ID</strong> e cole abaixo</li>
+          </ol>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Google OAuth Client ID</label>
+          <input type="text" class="form-input" id="gcalClientId" placeholder="xxxx.apps.googleusercontent.com">
+        </div>
+        <button class="btn btn-primary" onclick="gcalConnect()">🔗 Conectar com Google</button>
+      </div>
+      <div id="gcalConnected" style="display:none">
+        <div class="connected-box" style="margin-bottom:12px">✅ Conectado ao Google Agenda</div>
+        <div style="font-size:.8rem;color:var(--text3);margin-bottom:12px" id="gcalUserEmail"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="gcalSyncAll()">🔄 Enviar todos os eventos</button>
+          <button class="btn btn-danger btn-sm" onclick="gcalDisconnect()">Desconectar</button>
+        </div>
+        <div style="margin-top:10px;font-size:.75rem;color:var(--text3)" id="gcalLog"></div>
+      </div>
+    </div>
     <!-- SINCRONIZAÇÃO -->
     <div id="blockConectado" style="display:none">
       <div class="connected-box">✅ Conectado ao GitHub Gist</div>
@@ -1831,6 +1863,7 @@ function renderSyncPage(){
     document.getElementById('showGistId').textContent=G.id();
   }
   atualizarBotoesTema(lsRaw('ag_tema')||'dark');
+  gcalUpdateUI();
 }
 
 // ═══════════════════════════════════════════
@@ -2905,6 +2938,186 @@ function gerarTemplatePDF(filtro){
 }
 
 // ═══════════════════════════════════════════
+//  GOOGLE CALENDAR INTEGRATION
+// ═══════════════════════════════════════════
+const GCAL_SCOPE    = 'https://www.googleapis.com/auth/calendar.events';
+const GCAL_API      = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+const GCAL_LS_KEY   = 'stplan_gcal';
+
+function gcalState(){ return JSON.parse(localStorage.getItem(GCAL_LS_KEY)||'{}'); }
+function gcalSave(obj){ localStorage.setItem(GCAL_LS_KEY, JSON.stringify(obj)); }
+function gcalToken(){ return gcalState().access_token||null; }
+function gcalIsConnected(){ return !!gcalToken(); }
+function gcalLog(msg){ const el=document.getElementById('gcalLog'); if(el) el.textContent=msg; }
+
+function gcalUpdateUI(){
+  const ok = gcalIsConnected();
+  const dis = document.getElementById('gcalDisconnected');
+  const con = document.getElementById('gcalConnected');
+  if(dis) dis.style.display = ok?'none':'block';
+  if(con) con.style.display = ok?'block':'none';
+  const emailEl = document.getElementById('gcalUserEmail');
+  if(emailEl && ok) emailEl.textContent = '📧 ' + (gcalState().email||'Conectado');
+  // Carrega client ID salvo
+  const ci = document.getElementById('gcalClientId');
+  if(ci && gcalState().client_id) ci.value = gcalState().client_id;
+}
+
+function gcalConnect(){
+  const clientId = document.getElementById('gcalClientId').value.trim();
+  if(!clientId){ alert('Cole o Client ID do Google OAuth.'); return; }
+  gcalSave({...gcalState(), client_id: clientId});
+
+  const redirectUri = window.location.origin + window.location.pathname;
+  const params = new URLSearchParams({
+    client_id:     clientId,
+    redirect_uri:  redirectUri,
+    response_type: 'token',
+    scope:         GCAL_SCOPE + ' email profile',
+    prompt:        'consent',
+  });
+
+  // Abre popup OAuth
+  const popup = window.open(
+    'https://accounts.google.com/o/oauth2/v2/auth?' + params,
+    'gcal_oauth',
+    'width=500,height=620,top=100,left=100'
+  );
+
+  // Listener para receber o token do popup
+  window.gcalOAuthCallback = function(hash){
+    const p = new URLSearchParams(hash.replace('#',''));
+    const token = p.get('access_token');
+    if(token){
+      // Busca email do usuário
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo',{
+        headers:{Authorization:'Bearer '+token}
+      }).then(r=>r.json()).then(info=>{
+        gcalSave({...gcalState(), access_token:token, email:info.email||'', expires_at:Date.now()+3500000});
+        gcalUpdateUI();
+        gcalLog('✅ Conectado com sucesso!');
+        if(popup&&!popup.closed) popup.close();
+      }).catch(()=>{
+        gcalSave({...gcalState(), access_token:token, expires_at:Date.now()+3500000});
+        gcalUpdateUI();
+        if(popup&&!popup.closed) popup.close();
+      });
+    }
+  };
+
+  // Verifica popup periodicamente
+  const timer = setInterval(()=>{
+    try{
+      if(popup.closed){ clearInterval(timer); return; }
+      const url = popup.location.href;
+      if(url && url.includes('access_token')){
+        const hash = popup.location.hash || popup.location.search;
+        clearInterval(timer);
+        window.gcalOAuthCallback(hash);
+      }
+    }catch(e){}
+  }, 500);
+}
+
+function gcalDisconnect(){
+  localStorage.removeItem(GCAL_LS_KEY);
+  gcalUpdateUI();
+  gcalLog('');
+}
+
+// Verifica se o token ainda é válido
+function gcalTokenValid(){
+  const s = gcalState();
+  return s.access_token && s.expires_at && Date.now() < s.expires_at;
+}
+
+// Formata evento STPlan para formato Google Calendar
+function gcalFormatEvent(ev, dateStr){
+  const [y,m,d] = dateStr.split('-');
+  const start = `${dateStr}T${ev.start}:00`;
+  const end   = `${dateStr}T${ev.end}:00`;
+  const body  = {
+    summary:     ev.title,
+    description: ev.pauta || '',
+    start: { dateTime: start, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+    end:   { dateTime: end,   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+    extendedProperties: { private: { stplanId: ev.id } }
+  };
+  return body;
+}
+
+// Cria evento no Google Calendar
+async function gcalCreateEvent(ev, dateStr){
+  if(!gcalTokenValid()) return;
+  try{
+    const r = await fetch(GCAL_API, {
+      method: 'POST',
+      headers: { Authorization:'Bearer '+gcalToken(), 'Content-Type':'application/json' },
+      body: JSON.stringify(gcalFormatEvent(ev, dateStr))
+    });
+    if(r.ok){
+      const data = await r.json();
+      // Salva o ID do Google vinculado ao ID do STPlan
+      const map = JSON.parse(localStorage.getItem('stplan_gcal_map')||'{}');
+      map[ev.id] = data.id;
+      localStorage.setItem('stplan_gcal_map', JSON.stringify(map));
+      gcalLog(`✅ Criado no Google: ${ev.title}`);
+    }
+  }catch(e){ gcalLog('❌ Erro ao criar: '+e.message); }
+}
+
+// Atualiza evento no Google Calendar
+async function gcalUpdateEvent(ev, dateStr){
+  if(!gcalTokenValid()) return;
+  const map = JSON.parse(localStorage.getItem('stplan_gcal_map')||'{}');
+  const googleId = map[ev.id];
+  if(!googleId){ gcalCreateEvent(ev, dateStr); return; } // Não existe no Google, cria
+  try{
+    await fetch(`${GCAL_API}/${googleId}`, {
+      method: 'PUT',
+      headers: { Authorization:'Bearer '+gcalToken(), 'Content-Type':'application/json' },
+      body: JSON.stringify(gcalFormatEvent(ev, dateStr))
+    });
+    gcalLog(`✅ Atualizado no Google: ${ev.title}`);
+  }catch(e){ gcalLog('❌ Erro ao atualizar: '+e.message); }
+}
+
+// Exclui evento no Google Calendar
+async function gcalDeleteEvent(evId){
+  if(!gcalTokenValid()) return;
+  const map = JSON.parse(localStorage.getItem('stplan_gcal_map')||'{}');
+  const googleId = map[evId];
+  if(!googleId) return;
+  try{
+    await fetch(`${GCAL_API}/${googleId}`, {
+      method: 'DELETE',
+      headers: { Authorization:'Bearer '+gcalToken() }
+    });
+    delete map[evId];
+    localStorage.setItem('stplan_gcal_map', JSON.stringify(map));
+    gcalLog('🗑 Removido do Google');
+  }catch(e){ gcalLog('❌ Erro ao excluir: '+e.message); }
+}
+
+// Envia todos os eventos da agenda para o Google
+async function gcalSyncAll(){
+  if(!gcalTokenValid()){ alert('Token expirado. Reconecte.'); return; }
+  gcalLog('🔄 Enviando eventos...');
+  let count = 0;
+  for(const dateStr of Object.keys(agenda)){
+    for(const ev of (agenda[dateStr]||[])){
+      await gcalCreateEvent(ev, dateStr);
+      count++;
+      await new Promise(r=>setTimeout(r,200)); // throttle
+    }
+  }
+  gcalLog(`✅ ${count} evento(s) enviados ao Google Agenda!`);
+}
+
+// Init Google Calendar UI
+gcalUpdateUI();
+
+// ═══════════════════════════════════════════
 //  POST-IT
 // ═══════════════════════════════════════════
 const PI_ROTATIONS = [-2.5,-1.8,-1.2,-0.6,0.5,0.9,1.5,2.1,-0.3,1.8,-1.5,0.7];
@@ -3572,17 +3785,22 @@ function saveEvent(){
   if(editingEvent){
     if(editingEventDate!==dateStr){
       agenda[editingEventDate]=(agenda[editingEventDate]||[]).filter(e=>e.id!==editingEvent.id);
+      if(gcalIsConnected()) gcalDeleteEvent(editingEvent.id);
     }
     const idx=agenda[dateStr].findIndex(e=>e.id===editingEvent.id);
     const upd={id:editingEvent.id,start,end,title,pauta,diretoria};
     if(idx>=0)agenda[dateStr][idx]=upd; else agenda[dateStr].push(upd);
+    if(gcalIsConnected()) gcalUpdateEvent(upd, dateStr);
   } else {
-    agenda[dateStr].push({id:uid(),start,end,title,pauta,diretoria});
+    const novoEv={id:uid(),start,end,title,pauta,diretoria};
+    agenda[dateStr].push(novoEv);
+    if(gcalIsConnected()) gcalCreateEvent(novoEv, dateStr);
   }
   afterSaveEvent(dateStr);
 }
 function deleteEvent(){
   if(!editingEvent||!confirm('Excluir este evento?'))return;
+  if(gcalIsConnected()) gcalDeleteEvent(editingEvent.id);
   agenda[editingEventDate]=(agenda[editingEventDate]||[]).filter(e=>e.id!==editingEvent.id);
   afterSaveEvent(editingEventDate);
 }
