@@ -950,6 +950,31 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
       </div>
     </div>
 
+    <!-- N8N / AUTOMAÇÕES -->
+    <div class="sync-card" style="margin-bottom:14px">
+      <h3>🤖 API para Automações (N8N)</h3>
+      <p style="margin-bottom:12px">Publica a agenda da semana em um Gist público que o N8N ou qualquer sistema pode ler via HTTP GET.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn btn-primary btn-sm" onclick="n8nPublish().then(()=>renderN8nSection())">📤 Publicar agenda da semana</button>
+      </div>
+      <div id="n8nApiSection" style="display:none">
+        <div style="font-size:.75rem;color:var(--text3);margin-bottom:4px;font-weight:600">🔗 URL da API (GET):</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+          <div style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--accent);word-break:break-all" id="n8nApiUrl"></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('n8nApiUrl').textContent);this.textContent='✓ Copiado!';setTimeout(()=>this.textContent='📋 Copiar URL',2000)">📋 Copiar URL</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.open(document.getElementById('n8nApiUrl').textContent,'_blank')">🌐 Abrir JSON</button>
+        </div>
+        <div style="margin-top:10px;background:rgba(79,142,247,.06);border-radius:8px;padding:10px 12px;font-size:.76rem;color:var(--text3);line-height:1.7">
+          <strong style="color:var(--text)">Como usar no N8N:</strong><br>
+          Node: <strong>HTTP Request</strong> → Método: <strong>GET</strong> → URL acima<br>
+          Retorna JSON com <code>semana_atual</code>, <code>proxima_semana</code> e <code>total_eventos</code><br>
+          Atualiza automaticamente ao clicar "Publicar" ou use <strong>Schedule Trigger</strong> no N8N
+        </div>
+      </div>
+    </div>
+
     <!-- GOOGLE CALENDAR -->
     <div class="sync-card" style="margin-bottom:14px">
       <h3>📅 Google Agenda</h3>
@@ -1701,6 +1726,7 @@ function dateShort(str) {
 //  GIST SYNC
 // ═══════════════════════════════════════════
 const GIST_FILE='agenda-data.json';
+const GIST_API_FILE='agenda-api.json'; // Gist público para N8N/automações
 const G={
   token:()=>lsRaw('g_token'),
   id:   ()=>lsRaw('g_id'),
@@ -1869,6 +1895,7 @@ function renderSyncPage(){
   }
   atualizarBotoesTema(lsRaw('ag_tema')||'dark');
   gcalUpdateUI();
+  renderN8nSection();
 }
 
 // ═══════════════════════════════════════════
@@ -2943,7 +2970,112 @@ function gerarTemplatePDF(filtro){
 }
 
 // ═══════════════════════════════════════════
-//  GOOGLE CALENDAR INTEGRATION
+//  API PÚBLICA (N8N / AUTOMAÇÕES)
+//  Publica um Gist público separado com dados
+//  estruturados da semana para leitura externa
+// ═══════════════════════════════════════════
+const N8N_LS='stplan_api_gist';
+
+function n8nGistId(){ return localStorage.getItem(N8N_LS)||null; }
+function n8nSetGistId(id){ localStorage.setItem(N8N_LS, id); }
+
+function n8nBuildPayload(){
+  // Monta dados da semana atual + próxima
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dow = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dow===0?6:dow-1));
+
+  const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const semana = [];
+  for(let w=0;w<2;w++){
+    for(let d=0;d<5;d++){
+      const dt = new Date(monday);
+      dt.setDate(monday.getDate()+w*7+d);
+      const dateStr = dt.toISOString().slice(0,10);
+      const evs = (agenda[dateStr]||[]).sort((a,b)=>a.start.localeCompare(b.start));
+      semana.push({
+        data:      dateStr,
+        diaSemana: DIAS[dt.getDay()],
+        eventos:   evs.map(e=>({
+          id:         e.id,
+          titulo:     e.title,
+          inicio:     e.start,
+          fim:        e.end,
+          pauta:      e.pauta||'',
+          diretoria:  !!(e.diretoria),
+        }))
+      });
+    }
+  }
+
+  return {
+    gerado_em:    new Date().toISOString(),
+    app:          'STPlan v3.0',
+    semana_atual: semana.slice(0,5),
+    proxima_semana: semana.slice(5,10),
+    total_eventos: semana.reduce((a,d)=>a+d.eventos.length,0),
+  };
+}
+
+async function n8nPublish(){
+  if(!G.ok()){ alert('Configure o Gist (GitHub) primeiro.'); return; }
+  const payload = n8nBuildPayload();
+  const content = JSON.stringify(payload, null, 2);
+  const gistId  = n8nGistId();
+  const headers = {'Authorization':'token '+G.token(),'Content-Type':'application/json'};
+
+  try{
+    let gistUrl;
+    if(gistId){
+      // Atualiza Gist existente
+      const r = await fetch(`https://api.github.com/gists/${gistId}`,{
+        method:'PATCH', headers,
+        body: JSON.stringify({files:{[GIST_API_FILE]:{content}}})
+      });
+      const data = await r.json();
+      gistUrl = data.html_url;
+    } else {
+      // Cria novo Gist PÚBLICO
+      const r = await fetch('https://api.github.com/gists',{
+        method:'POST', headers,
+        body: JSON.stringify({
+          description: 'STPlan API — Agenda da Semana',
+          public: true,
+          files: {[GIST_API_FILE]:{content}}
+        })
+      });
+      const data = await r.json();
+      n8nSetGistId(data.id);
+      gistUrl = data.html_url;
+      // Monta URL raw e salva
+      const rawUrl = `https://gist.githubusercontent.com/${data.owner?.login}/${data.id}/raw/${GIST_API_FILE}`;
+      localStorage.setItem('stplan_api_url', rawUrl);
+    }
+    renderN8nSection();
+    return true;
+  }catch(e){
+    alert('Erro ao publicar: '+e.message);
+    return false;
+  }
+}
+
+function renderN8nSection(){
+  const url = localStorage.getItem('stplan_api_url');
+  const urlEl = document.getElementById('n8nApiUrl');
+  const secEl = document.getElementById('n8nApiSection');
+  if(!urlEl||!secEl) return;
+  if(url){
+    secEl.style.display='block';
+    urlEl.textContent = url;
+  } else {
+    secEl.style.display='none';
+  }
+}
+
+// Auto-publica sempre que a agenda for salva
+const _origSaveAgenda = saveAgenda;
+// (será chamado no saveAgenda via hook abaixo)
 // ═══════════════════════════════════════════
 const GCAL_SCOPE    = 'https://www.googleapis.com/auth/calendar.events';
 const GCAL_API      = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
