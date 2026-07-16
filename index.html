@@ -969,6 +969,11 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
           <label class="form-label">Google OAuth Client ID</label>
           <input type="text" class="form-input" id="gcalClientId" placeholder="xxxx.apps.googleusercontent.com">
         </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.78rem;">
+          <div style="color:var(--text3);margin-bottom:4px;font-weight:600">URL para cadastrar no Google Console:</div>
+          <div style="font-family:'DM Mono',monospace;color:var(--accent);word-break:break-all" id="gcalRedirectUri"></div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:6px;font-size:.72rem" onclick="navigator.clipboard.writeText(document.getElementById('gcalRedirectUri').textContent)">📋 Copiar</button>
+        </div>
         <button class="btn btn-primary" onclick="gcalConnect()">🔗 Conectar com Google</button>
       </div>
       <div id="gcalConnected" style="display:none">
@@ -2958,9 +2963,11 @@ function gcalUpdateUI(){
   if(con) con.style.display = ok?'block':'none';
   const emailEl = document.getElementById('gcalUserEmail');
   if(emailEl && ok) emailEl.textContent = '📧 ' + (gcalState().email||'Conectado');
-  // Carrega client ID salvo
   const ci = document.getElementById('gcalClientId');
   if(ci && gcalState().client_id) ci.value = gcalState().client_id;
+  // Mostra a redirect URI exata para o usuário cadastrar no Console
+  const uriEl = document.getElementById('gcalRedirectUri');
+  if(uriEl) uriEl.textContent = 'https://charlesschirmer.github.io/agenda';
 }
 
 function gcalConnect(){
@@ -2968,38 +2975,49 @@ function gcalConnect(){
   if(!clientId){ alert('Cole o Client ID do Google OAuth.'); return; }
   gcalSave({...gcalState(), client_id: clientId});
 
-  const redirectUri = window.location.origin + window.location.pathname;
+  // Redirect URI fixa para GitHub Pages
+  const redirectUri = 'https://charlesschirmer.github.io/agenda';
+
+  // Mostra ao usuário qual URL está sendo usada (para cadastrar no Console)
+  console.log('Google OAuth redirect_uri:', redirectUri);
+
   const params = new URLSearchParams({
     client_id:     clientId,
     redirect_uri:  redirectUri,
     response_type: 'token',
     scope:         GCAL_SCOPE + ' email profile',
     prompt:        'consent',
+    include_granted_scopes: 'true',
   });
+
+  // Salva redirect_uri para debug
+  gcalSave({...gcalState(), redirect_uri_used: redirectUri});
 
   // Abre popup OAuth
   const popup = window.open(
     'https://accounts.google.com/o/oauth2/v2/auth?' + params,
     'gcal_oauth',
-    'width=500,height=620,top=100,left=100'
+    'width=520,height=660,top=80,left=100'
   );
+
+  if(!popup){ alert('Popup bloqueado! Permita popups para este site e tente novamente.'); return; }
 
   // Listener para receber o token do popup
   window.gcalOAuthCallback = function(hash){
-    const p = new URLSearchParams(hash.replace('#',''));
+    const p = new URLSearchParams(hash.replace(/^[#?]/, ''));
     const token = p.get('access_token');
     if(token){
-      // Busca email do usuário
       fetch('https://www.googleapis.com/oauth2/v3/userinfo',{
         headers:{Authorization:'Bearer '+token}
       }).then(r=>r.json()).then(info=>{
         gcalSave({...gcalState(), access_token:token, email:info.email||'', expires_at:Date.now()+3500000});
         gcalUpdateUI();
-        gcalLog('✅ Conectado com sucesso!');
+        gcalLog('✅ Conectado: ' + (info.email||''));
         if(popup&&!popup.closed) popup.close();
       }).catch(()=>{
         gcalSave({...gcalState(), access_token:token, expires_at:Date.now()+3500000});
         gcalUpdateUI();
+        gcalLog('✅ Conectado com sucesso!');
         if(popup&&!popup.closed) popup.close();
       });
     }
@@ -3008,15 +3026,20 @@ function gcalConnect(){
   // Verifica popup periodicamente
   const timer = setInterval(()=>{
     try{
-      if(popup.closed){ clearInterval(timer); return; }
+      if(!popup || popup.closed){ clearInterval(timer); return; }
       const url = popup.location.href;
-      if(url && url.includes('access_token')){
-        const hash = popup.location.hash || popup.location.search;
-        clearInterval(timer);
-        window.gcalOAuthCallback(hash);
+      if(url && (url.includes('access_token') || url.includes('#'))){
+        const frag = popup.location.hash || popup.location.search;
+        if(frag && frag.includes('access_token')){
+          clearInterval(timer);
+          window.gcalOAuthCallback(frag);
+        }
       }
-    }catch(e){}
-  }, 500);
+    }catch(e){/* cross-origin, aguarda */}
+  }, 600);
+
+  // Timeout de 3 minutos
+  setTimeout(()=>clearInterval(timer), 180000);
 }
 
 function gcalDisconnect(){
