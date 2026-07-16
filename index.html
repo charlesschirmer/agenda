@@ -1658,7 +1658,14 @@ let agenda   = lsGet('ag2_agenda',   {});
 let template = loadTemplate();
 let tasks    = lsGet('ag2_tasks',    clone(TAREFAS_PADRAO));
 
-function saveAgenda()   { lsSet('ag2_agenda',   agenda);   if(G.ok()) syncPush(true); }
+function saveAgenda() {
+  lsSet('ag2_agenda', agenda);
+  if(G.ok()){
+    syncPush(true);
+    // Atualiza API pública (N8N) automaticamente se já foi publicada antes
+    if(n8nGistId()) n8nPublish();
+  }
+}
 function saveTemplate() {
   lsSet('ag2_template', template);
   lsRawSet('ag2_template_version', String(TEMPLATE_VERSION));
