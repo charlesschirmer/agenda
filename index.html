@@ -148,6 +148,11 @@
     #novaMinutaModal.open .modal{transform:translateY(0);}
   }
 
+  #n8nPreviewModal{align-items:center;padding:16px;}
+  #n8nPreviewModal .modal{border-radius:16px;max-width:680px;max-height:88vh;transform:translateY(16px) scale(.98);position:relative;padding:22px 22px 26px;}
+  #n8nPreviewModal.open .modal{transform:translateY(0) scale(1);}
+  #n8nPreviewModal .modal-handle{display:none;}
+
   #semanaPdfModal{align-items:center;padding:16px;}
   #semanaPdfModal .modal{border-radius:16px;max-width:400px;transform:translateY(16px) scale(.98);position:relative;padding:22px 22px 26px;}
   #semanaPdfModal.open .modal{transform:translateY(0) scale(1);}
@@ -956,6 +961,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
       <p style="margin-bottom:12px">Publica a agenda da semana em um Gist público que o N8N ou qualquer sistema pode ler via HTTP GET.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <button class="btn btn-primary btn-sm" onclick="n8nPublish().then(()=>renderN8nSection())">📤 Publicar agenda da semana</button>
+        <button class="btn btn-ghost btn-sm" onclick="n8nPreview()">🔍 Ver JSON atual</button>
       </div>
       <div id="n8nApiSection" style="display:none">
         <div style="font-size:.75rem;color:var(--text3);margin-bottom:4px;font-weight:600">🔗 URL da API (GET):</div>
@@ -1327,6 +1333,21 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
       <button class="btn btn-ghost" onclick="document.getElementById('blPdfModal').classList.remove('open')">Cancelar</button>
       <button class="btn btn-primary" onclick="confirmarExportarPDF()">📄 Gerar PDF</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL N8N PREVIEW -->
+<div class="modal-overlay" id="n8nPreviewModal">
+  <div class="modal" style="max-width:680px">
+    <button class="modal-close-btn" onclick="document.getElementById('n8nPreviewModal').classList.remove('open')" title="Fechar">✕</button>
+    <h2 style="padding-right:36px">🔍 JSON da API — Conteúdo Atual</h2>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="n8nVerificarGist()">☁️ Verificar no Gist</button>
+      <button class="btn btn-primary btn-sm" onclick="n8nPublish().then(()=>{n8nPreview();renderN8nSection();})">📤 Publicar agora</button>
+      <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('n8nPreviewJson').textContent)">📋 Copiar JSON</button>
+    </div>
+    <div id="n8nPreviewStatus" style="font-size:.78rem;margin-bottom:8px;padding:6px 10px;border-radius:6px;display:none"></div>
+    <pre id="n8nPreviewJson" style="background:var(--surface2);border-radius:8px;padding:14px;font-size:.72rem;font-family:'DM Mono',monospace;overflow:auto;max-height:420px;white-space:pre-wrap;word-break:break-word;color:var(--text2);line-height:1.5"></pre>
   </div>
 </div>
 
@@ -3080,9 +3101,56 @@ function renderN8nSection(){
   }
 }
 
-// Auto-publica sempre que a agenda for salva
-const _origSaveAgenda = saveAgenda;
-// (será chamado no saveAgenda via hook abaixo)
+function n8nPreview(){
+  const payload = n8nBuildPayload();
+  const json    = JSON.stringify(payload, null, 2);
+  const el      = document.getElementById('n8nPreviewJson');
+  const modal   = document.getElementById('n8nPreviewModal');
+  if(el) el.textContent = json;
+  const status = document.getElementById('n8nPreviewStatus');
+  const total  = payload.total_eventos;
+  const gistOk = !!n8nGistId();
+  if(status){
+    status.style.display='block';
+    if(!gistOk){
+      status.style.background='rgba(247,147,79,.12)'; status.style.color='var(--orange)';
+      status.textContent='⚠️ Ainda não publicado. Clique em "Publicar agora" para criar a URL da API.';
+    } else if(total===0){
+      status.style.background='rgba(247,111,111,.1)'; status.style.color='var(--red)';
+      status.textContent='⚠️ Nenhum evento encontrado para esta semana.';
+    } else {
+      status.style.background='rgba(16,126,62,.1)'; status.style.color='var(--green)';
+      status.textContent=`✅ ${total} evento(s) encontrado(s). Gist ${gistOk?'publicado':'não publicado'}.`;
+    }
+  }
+  if(modal) modal.classList.add('open');
+}
+
+async function n8nVerificarGist(){
+  const url    = localStorage.getItem('stplan_api_url');
+  const status = document.getElementById('n8nPreviewStatus');
+  const el     = document.getElementById('n8nPreviewJson');
+  if(!url){
+    if(status){ status.style.display='block'; status.style.background='rgba(247,111,111,.1)'; status.style.color='var(--red)'; status.textContent='❌ Nenhuma URL publicada ainda. Clique em "Publicar agora".'; }
+    return;
+  }
+  if(status){ status.style.display='block'; status.style.background='rgba(79,142,247,.08)'; status.style.color='var(--accent)'; status.textContent='🔄 Buscando do Gist...'; }
+  try{
+    const r = await fetch(url+'?t='+Date.now());
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    if(el) el.textContent = JSON.stringify(data, null, 2);
+    if(status){
+      status.style.background='rgba(16,126,62,.1)'; status.style.color='var(--green)';
+      status.textContent=`✅ Gist acessível! ${data.total_eventos} evento(s). Gerado em: ${new Date(data.gerado_em).toLocaleString('pt-BR')}`;
+    }
+  }catch(e){
+    if(status){ status.style.background='rgba(247,111,111,.1)'; status.style.color='var(--red)'; status.textContent='❌ Erro: '+e.message; }
+  }
+}
+
+document.getElementById('n8nPreviewModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.target.classList.remove('open');});
+
 // ═══════════════════════════════════════════
 const GCAL_SCOPE    = 'https://www.googleapis.com/auth/calendar.events';
 const GCAL_API      = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
