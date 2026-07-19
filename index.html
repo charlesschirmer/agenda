@@ -388,47 +388,60 @@
   body.light .bl-item{background:#f4f6fb;border-color:#c0c8d8;}
 
   /* ── OKRs ── */
+  #page-okr{
+    max-width:none;
+    margin-left:calc(-50vw + 50%);
+    margin-right:calc(-50vw + 50%);
+    width:100vw;
+    padding:0;
+  }
+  .okr-inner{padding:16px 24px 80px;}
   .okr-tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--border);}
   .okr-tab{padding:10px 20px;font-size:.83rem;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;transition:all .2s;}
   .okr-tab:hover{color:var(--text);}
   .okr-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 
-  /* Dashboard */
-  .okr-dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px;}
-  .okr-kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;display:flex;align-items:center;gap:16px;}
-  .okr-kpi-icon{font-size:1.8rem;flex-shrink:0;}
-  .okr-kpi-val{font-size:1.6rem;font-weight:700;color:var(--text);line-height:1;}
+  /* KPI strip — linha única */
+  .okr-kpis-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+  .okr-kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:center;gap:14px;}
+  .okr-kpi-icon{font-size:1.6rem;flex-shrink:0;}
+  .okr-kpi-val{font-size:1.5rem;font-weight:700;color:var(--text);line-height:1;}
   .okr-kpi-label{font-size:.72rem;color:var(--text3);margin-top:3px;font-weight:500;}
 
-  /* Objective cards */
-  .okr-obj{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;}
-  .okr-obj-header{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+  /* Dashboard grid — 3 colunas */
+  .okr-dash-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;}
+  @media(max-width:900px){.okr-dash-grid{grid-template-columns:1fr 1fr;} .okr-kpis-row{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:600px){.okr-dash-grid{grid-template-columns:1fr;} .okr-kpis-row{grid-template-columns:repeat(2,1fr);}}
+
+  /* Objective cards — 2 col no desktop */
+  .okr-obj-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:800px){.okr-obj-grid{grid-template-columns:1fr;}}
+
+  .okr-obj{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .okr-obj-header{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .15s;}
+  .okr-obj-header:hover{background:var(--surface2);}
   .okr-obj-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
-  .okr-obj-title{flex:1;font-size:.92rem;font-weight:700;color:var(--text);}
-  .okr-obj-pct{font-size:1.1rem;font-weight:700;min-width:48px;text-align:right;}
-  .okr-obj-bar-wrap{height:6px;background:var(--surface2);margin:0 16px 14px;}
+  .okr-obj-title{flex:1;font-size:.9rem;font-weight:700;color:var(--text);}
+  .okr-obj-pct{font-size:1.05rem;font-weight:700;min-width:44px;text-align:right;}
+  .okr-obj-bar-wrap{height:6px;background:var(--surface2);margin:0 16px 12px;}
   .okr-obj-bar{height:6px;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);}
 
-  /* Key Results */
   .okr-krs{border-top:1px solid var(--border);}
-  .okr-kr{padding:11px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+  .okr-kr{padding:9px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
   .okr-kr:last-child{border-bottom:none;}
-  .okr-kr-title{flex:1;font-size:.82rem;color:var(--text2);}
-  .okr-kr-vals{font-size:.75rem;font-family:'DM Mono',monospace;color:var(--text3);white-space:nowrap;text-align:right;min-width:90px;}
-  .okr-kr-mini{width:80px;height:4px;background:var(--surface2);border-radius:2px;flex-shrink:0;}
+  .okr-kr-title{flex:1;font-size:.8rem;color:var(--text2);}
+  .okr-kr-vals{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--text3);white-space:nowrap;text-align:right;min-width:80px;}
+  .okr-kr-mini{width:70px;height:4px;background:var(--surface2);border-radius:2px;flex-shrink:0;}
   .okr-kr-mini-fill{height:4px;border-radius:2px;}
 
-  /* Charts area */
-  .okr-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:20px;}
+  /* Charts */
   .okr-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
-  .okr-chart-title{font-size:.78rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;}
-
-  /* Progress ring */
-  .okr-ring-wrap{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;}
-  .okr-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+  .okr-chart-title{font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px;}
+  .okr-ring-wrap{display:flex;align-items:flex-start;justify-content:center;gap:14px;flex-wrap:wrap;}
+  .okr-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;}
   .okr-ring-label{position:absolute;text-align:center;}
-  .okr-ring-pct{font-size:1.1rem;font-weight:700;color:var(--text);display:block;}
-  .okr-ring-name{font-size:.6rem;color:var(--text3);display:block;max-width:60px;text-align:center;line-height:1.2;}
+  .okr-ring-pct{font-size:1.05rem;font-weight:700;color:var(--text);display:block;}
+  .okr-ring-name{font-size:.58rem;color:var(--text3);display:block;max-width:55px;text-align:center;line-height:1.2;}
 
   /* Modal OKR */
   #okrModal{align-items:center;padding:16px;}
@@ -874,28 +887,27 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
 
   <!-- OKR -->
   <div id="page-okr" class="page">
-    <div class="section-header">
-      <div class="section-title">OKRs</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost btn-sm" id="okrBtnDash" onclick="okrShowView('dashboard')">📊 Dashboard</button>
-        <button class="btn btn-ghost btn-sm" id="okrBtnList" onclick="okrShowView('lista')">📋 Lista</button>
-        <button class="btn btn-primary btn-sm" onclick="openOkrModal(null)">+ Objetivo</button>
+    <div class="okr-inner">
+      <div class="section-header">
+        <div class="section-title">OKRs</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" id="okrBtnDash" onclick="okrShowView('dashboard')">📊 Dashboard</button>
+          <button class="btn btn-ghost btn-sm" id="okrBtnList" onclick="okrShowView('lista')">📋 Lista</button>
+          <button class="btn btn-primary btn-sm" onclick="openOkrModal(null)">+ Objetivo</button>
+        </div>
       </div>
-    </div>
 
-    <!-- DASHBOARD VIEW -->
-    <div id="okrViewDashboard">
-      <!-- KPIs -->
-      <div class="okr-dashboard" id="okrKpis"></div>
-      <!-- Gráficos -->
-      <div class="okr-charts" id="okrCharts"></div>
-      <!-- Objetivos resumidos -->
-      <div id="okrObjList"></div>
-    </div>
+      <!-- DASHBOARD VIEW -->
+      <div id="okrViewDashboard">
+        <div class="okr-kpis-row" id="okrKpis"></div>
+        <div class="okr-dash-grid" id="okrCharts"></div>
+        <div class="okr-obj-grid" id="okrObjList"></div>
+      </div>
 
-    <!-- LISTA VIEW -->
-    <div id="okrViewLista" style="display:none">
-      <div id="okrListaCompleta"></div>
+      <!-- LISTA VIEW -->
+      <div id="okrViewLista" style="display:none">
+        <div class="okr-obj-grid" id="okrListaCompleta"></div>
+      </div>
     </div>
   </div>
 
@@ -3211,25 +3223,25 @@ function renderOKR(){
 }
 
 function renderOKRDashboard(){
-  const total = okrs.length;
+  const total    = okrs.length;
   const totalKrs = okrs.reduce((a,o)=>a+(o.krs||[]).length,0);
-  const avgPct = total ? Math.round(okrs.reduce((a,o)=>a+okrPct(o),0)/total) : 0;
-  const onTrack = okrs.filter(o=>okrPct(o)>=50).length;
+  const avgPct   = total ? Math.round(okrs.reduce((a,o)=>a+okrPct(o),0)/total) : 0;
+  const onTrack  = okrs.filter(o=>okrPct(o)>=50).length;
 
-  // KPIs
+  // KPIs em linha
   document.getElementById('okrKpis').innerHTML = `
     <div class="okr-kpi"><div class="okr-kpi-icon">🎯</div><div><div class="okr-kpi-val">${total}</div><div class="okr-kpi-label">Objetivos</div></div></div>
     <div class="okr-kpi"><div class="okr-kpi-icon">📊</div><div><div class="okr-kpi-val">${totalKrs}</div><div class="okr-kpi-label">Key Results</div></div></div>
     <div class="okr-kpi"><div class="okr-kpi-icon">📈</div><div><div class="okr-kpi-val" style="color:${okrColor(avgPct)}">${avgPct}%</div><div class="okr-kpi-label">Progresso médio</div></div></div>
     <div class="okr-kpi"><div class="okr-kpi-icon">✅</div><div><div class="okr-kpi-val" style="color:var(--green)">${onTrack}</div><div class="okr-kpi-label">No caminho (≥50%)</div></div></div>`;
 
-  // Charts
+  // Charts — 3 colunas
   renderOKRCharts();
 
-  // Objetivos resumidos
+  // Objetivos em grid 2 colunas
   document.getElementById('okrObjList').innerHTML = okrs.length
     ? okrs.map(obj=>okrObjCard(obj)).join('')
-    : '<div class="empty"><p>Nenhum objetivo cadastrado ainda.<br>Clique em <strong>+ Objetivo</strong> para começar.</p></div>';
+    : '<div class="empty" style="grid-column:1/-1"><p>Nenhum objetivo cadastrado ainda.<br>Clique em <strong>+ Objetivo</strong> para começar.</p></div>';
 }
 
 function renderOKRCharts(){
