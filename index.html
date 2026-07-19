@@ -1477,7 +1477,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
     </div>
 
     <!-- Aba Key Results -->
-    <div id="okrTabKrs" class="modal-tab-panel">
+    <div id="okrPanelKrs" class="modal-tab-panel">
       <div id="okrKrList" style="margin-bottom:12px"></div>
       <div class="sync-card" style="padding:14px">
         <div style="font-size:.78rem;font-weight:600;color:var(--text3);margin-bottom:10px">+ Novo Key Result</div>
@@ -3350,8 +3350,8 @@ document.getElementById('okrModal').addEventListener('click',e=>{if(e.target===e
 
 function switchOkrTab(tab){
   document.querySelectorAll('#okrModal .modal-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='objetivo'?0:1)));
-  document.getElementById('okrTabObjetivo').classList.toggle('active',tab==='objetivo');
-  document.getElementById('okrTabKrs').classList.toggle('active',tab==='krs');
+  document.getElementById('okrTabObjetivo').classList.toggle('active', tab==='objetivo');
+  document.getElementById('okrPanelKrs').classList.toggle('active',   tab==='krs');
 }
 
 function okrSetCor(cor){
