@@ -387,6 +387,59 @@
   .bl-tag-date.sprint{color:var(--accent);}
   body.light .bl-item{background:#f4f6fb;border-color:#c0c8d8;}
 
+  /* ── OKRs ── */
+  .okr-tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--border);}
+  .okr-tab{padding:10px 20px;font-size:.83rem;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;transition:all .2s;}
+  .okr-tab:hover{color:var(--text);}
+  .okr-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  /* Dashboard */
+  .okr-dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px;}
+  .okr-kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;display:flex;align-items:center;gap:16px;}
+  .okr-kpi-icon{font-size:1.8rem;flex-shrink:0;}
+  .okr-kpi-val{font-size:1.6rem;font-weight:700;color:var(--text);line-height:1;}
+  .okr-kpi-label{font-size:.72rem;color:var(--text3);margin-top:3px;font-weight:500;}
+
+  /* Objective cards */
+  .okr-obj{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;}
+  .okr-obj-header{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+  .okr-obj-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .okr-obj-title{flex:1;font-size:.92rem;font-weight:700;color:var(--text);}
+  .okr-obj-pct{font-size:1.1rem;font-weight:700;min-width:48px;text-align:right;}
+  .okr-obj-bar-wrap{height:6px;background:var(--surface2);margin:0 16px 14px;}
+  .okr-obj-bar{height:6px;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+
+  /* Key Results */
+  .okr-krs{border-top:1px solid var(--border);}
+  .okr-kr{padding:11px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+  .okr-kr:last-child{border-bottom:none;}
+  .okr-kr-title{flex:1;font-size:.82rem;color:var(--text2);}
+  .okr-kr-vals{font-size:.75rem;font-family:'DM Mono',monospace;color:var(--text3);white-space:nowrap;text-align:right;min-width:90px;}
+  .okr-kr-mini{width:80px;height:4px;background:var(--surface2);border-radius:2px;flex-shrink:0;}
+  .okr-kr-mini-fill{height:4px;border-radius:2px;}
+
+  /* Charts area */
+  .okr-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:20px;}
+  .okr-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+  .okr-chart-title{font-size:.78rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;}
+
+  /* Progress ring */
+  .okr-ring-wrap{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;}
+  .okr-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+  .okr-ring-label{position:absolute;text-align:center;}
+  .okr-ring-pct{font-size:1.1rem;font-weight:700;color:var(--text);display:block;}
+  .okr-ring-name{font-size:.6rem;color:var(--text3);display:block;max-width:60px;text-align:center;line-height:1.2;}
+
+  /* Modal OKR */
+  #okrModal{align-items:center;padding:16px;}
+  #okrModal .modal{border-radius:16px;max-width:560px;max-height:90vh;transform:translateY(16px) scale(.98);position:relative;padding:22px 22px 26px;}
+  #okrModal.open .modal{transform:translateY(0) scale(1);}
+  #okrModal .modal-handle{display:none;}
+
+  body.light .okr-kpi{background:#f4f6fb;border-color:#c0c8d8;}
+  body.light .okr-obj{background:#f4f6fb;border-color:#c0c8d8;}
+  body.light .okr-chart-card{background:#f4f6fb;border-color:#c0c8d8;}
+
   /* FINALIZADO (arquivo) */
   .finalizado-wrap{max-width:700px;margin:0 auto;}
   .finalizado-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;opacity:.8;}
@@ -711,6 +764,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
   <button class="tab" onclick="showPage('tarefas')">Tarefas</button>
   <button class="tab" onclick="showPage('pipeline')">Pipeline</button>
   <button class="tab" onclick="showPage('backlog')">BackLog</button>
+  <button class="tab" onclick="showPage('okr')">OKRs</button>
   <button class="tab" onclick="showPage('postit')">Post-It</button>
   <button class="tab" onclick="showPage('minuta')">Minuta</button>
   <button class="tab" onclick="showPage('template')">Template</button>
@@ -815,6 +869,33 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
       </div>
       <p style="max-width:700px;margin:0 auto 16px;font-size:.8rem;color:var(--text3)">Cards arquivados. Clique em <strong style="color:var(--text)">↩ Restaurar</strong> para devolver ao Pipeline.</p>
       <div class="finalizado-wrap" id="finalizadoList"></div>
+    </div>
+  </div>
+
+  <!-- OKR -->
+  <div id="page-okr" class="page">
+    <div class="section-header">
+      <div class="section-title">OKRs</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" id="okrBtnDash" onclick="okrShowView('dashboard')">📊 Dashboard</button>
+        <button class="btn btn-ghost btn-sm" id="okrBtnList" onclick="okrShowView('lista')">📋 Lista</button>
+        <button class="btn btn-primary btn-sm" onclick="openOkrModal(null)">+ Objetivo</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="okrViewDashboard">
+      <!-- KPIs -->
+      <div class="okr-dashboard" id="okrKpis"></div>
+      <!-- Gráficos -->
+      <div class="okr-charts" id="okrCharts"></div>
+      <!-- Objetivos resumidos -->
+      <div id="okrObjList"></div>
+    </div>
+
+    <!-- LISTA VIEW -->
+    <div id="okrViewLista" style="display:none">
+      <div id="okrListaCompleta"></div>
     </div>
   </div>
 
@@ -1336,6 +1417,97 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
   </div>
 </div>
 
+<!-- MODAL OKR -->
+<div class="modal-overlay" id="okrModal">
+  <div class="modal">
+    <button class="modal-close-btn" onclick="closeOkrModal()" title="Fechar">✕</button>
+    <h2 id="okrModalTitle" style="padding-right:36px">Novo Objetivo</h2>
+
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchOkrTab('objetivo')">🎯 Objetivo</button>
+      <button class="modal-tab" onclick="switchOkrTab('krs')" id="okrTabKrs">📊 Key Results</button>
+    </div>
+
+    <!-- Aba Objetivo -->
+    <div id="okrTabObjetivo" class="modal-tab-panel active">
+      <div class="form-group">
+        <label class="form-label">Objetivo</label>
+        <input type="text" class="form-input" id="okrTitulo" placeholder="Ex: Aumentar receita em 30%...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Área / Departamento</label>
+          <select class="form-select" id="okrArea">
+            <option value="Comercial">Comercial</option>
+            <option value="Operacional">Operacional</option>
+            <option value="Marketing">Marketing</option>
+            <option value="RH">RH</option>
+            <option value="Financeiro">Financeiro</option>
+            <option value="Tecnologia">Tecnologia</option>
+            <option value="Estratégico">Estratégico</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Período</label>
+          <select class="form-select" id="okrPeriodo">
+            <option value="Q1 2026">Q1 2026</option>
+            <option value="Q2 2026">Q2 2026</option>
+            <option value="Q3 2026" selected>Q3 2026</option>
+            <option value="Q4 2026">Q4 2026</option>
+            <option value="2026">Anual 2026</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cor de identificação</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${['#4f8ef7','#3ecf8e','#f7934f','#f76f6f','#a78bfa','#f472b6','#34d399','#fbbf24'].map((c,i)=>
+            `<div onclick="okrSetCor('${c}')" style="width:24px;height:24px;border-radius:50%;background:${c};cursor:pointer;border:2px solid transparent;transition:transform .12s" class="okr-cor-btn" data-cor="${c}"></div>`
+          ).join('')}
+        </div>
+        <input type="hidden" id="okrCor" value="#4f8ef7">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeOkrModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveOkrObj()">Salvar e adicionar KRs →</button>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <button class="btn btn-danger btn-sm" id="okrDeleteBtn" onclick="deleteOkr()" style="display:none">Excluir objetivo</button>
+      </div>
+    </div>
+
+    <!-- Aba Key Results -->
+    <div id="okrTabKrs" class="modal-tab-panel">
+      <div id="okrKrList" style="margin-bottom:12px"></div>
+      <div class="sync-card" style="padding:14px">
+        <div style="font-size:.78rem;font-weight:600;color:var(--text3);margin-bottom:10px">+ Novo Key Result</div>
+        <div class="form-group">
+          <input type="text" class="form-input" id="krTitulo" placeholder="Ex: Atingir 150 novos clientes...">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Meta</label>
+            <input type="number" class="form-input" id="krMeta" placeholder="100" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Atual</label>
+            <input type="number" class="form-input" id="krAtual" placeholder="0" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unidade</label>
+            <input type="text" class="form-input" id="krUnidade" placeholder="%" style="width:70px">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addKr()" style="width:100%;justify-content:center">+ Adicionar KR</button>
+      </div>
+      <div class="form-actions" style="margin-top:12px">
+        <button class="btn btn-ghost" onclick="closeOkrModal()">Fechar</button>
+        <button class="btn btn-primary" onclick="closeOkrModal();renderOKR()">✓ Concluir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL N8N PREVIEW -->
 <div class="modal-overlay" id="n8nPreviewModal">
   <div class="modal" style="max-width:680px">
@@ -1781,7 +1953,7 @@ async function syncPush(silent=false){
   if(!G.ok())return;
   if(!silent)setSyncUI('busy','Enviando…');
   try{
-    const payload={agenda,template,tasks,minutas,backlog,postits,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
+    const payload={agenda,template,tasks,minutas,backlog,postits,okrs,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
     const r=await fetch(`https://api.github.com/gists/${G.id()}`,{
       method:'PATCH',
       headers:{'Authorization':'token '+G.token(),'Content-Type':'application/json'},
@@ -1820,11 +1992,13 @@ async function syncPull(){
     minutas  = remote.minutas   || minutas;
     backlog  = remote.backlog   || backlog;
     postits  = remote.postits   || postits;
+    okrs     = remote.okrs      || okrs;
     lsSet('ag2_agenda',   agenda);
     lsSet('ag2_tasks',    tasks);
     lsSet('ag2_minutas',  minutas);
     lsSet('ag2_backlog',  backlog);
     lsSet('ag2_postits',  postits);
+    lsSet('ag2_okrs',     okrs);
     // Não atualiza ag_my_push no pull manual — só push atualiza
     renderAll();
     setSyncUI('ok','Sincronizado ✓');
@@ -1861,7 +2035,7 @@ async function conectar(){
       if(!ck.ok)throw new Error('Gist ID não encontrado.');
       gistId=existId;
     } else {
-      const payload={agenda,template,tasks,minutas,backlog,postits,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
+      const payload={agenda,template,tasks,minutas,backlog,postits,okrs,templateVersion:TEMPLATE_VERSION,ts:Date.now()};
       const cr=await fetch('https://api.github.com/gists',{
         method:'POST',
         headers:{'Authorization':'token '+token,'Content-Type':'application/json'},
@@ -2196,7 +2370,7 @@ function renderTemplate(){
 //  PAGES
 // ═══════════════════════════════════════════
 let currentPage='hoje';
-const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,pipeline:4,backlog:5,postit:6,minuta:7,template:8,sync:9};
+const PAGE_IDX={hoje:0,semana:1,mes:2,tarefas:3,pipeline:4,backlog:5,okr:6,postit:7,minuta:8,template:9,sync:10};
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===PAGE_IDX[id]));
@@ -2208,6 +2382,7 @@ function showPage(id){
   if(id==='tarefas') renderTasks();
   if(id==='pipeline')renderPipeline();
   if(id==='backlog') renderBacklog();
+  if(id==='okr')    { okrShowView(okrCurrentView); renderOKR(); }
   if(id==='postit')  renderPostIts();
   if(id==='minuta')  renderMinuta();
   if(id==='template')renderTemplate();
@@ -2998,7 +3173,283 @@ function gerarTemplatePDF(filtro){
 }
 
 // ═══════════════════════════════════════════
-//  API PÚBLICA (N8N / AUTOMAÇÕES)
+//  OKRs
+// ═══════════════════════════════════════════
+let okrs = lsGet('ag2_okrs', []);
+function saveOkrs(){ lsSet('ag2_okrs', okrs); if(G.ok()) syncPush(true); }
+
+let editingOkrId = null;
+let okrCurrentView = 'dashboard';
+
+function okrShowView(v){
+  okrCurrentView = v;
+  document.getElementById('okrViewDashboard').style.display = v==='dashboard'?'block':'none';
+  document.getElementById('okrViewLista').style.display     = v==='lista'?'block':'none';
+  document.getElementById('okrBtnDash').className = 'btn btn-sm ' + (v==='dashboard'?'btn-primary':'btn-ghost');
+  document.getElementById('okrBtnList').className = 'btn btn-sm ' + (v==='lista'?'btn-primary':'btn-ghost');
+}
+
+function okrPct(obj){
+  if(!obj.krs||!obj.krs.length) return 0;
+  const avg = obj.krs.reduce((a,kr)=>{
+    const p = kr.meta>0 ? Math.min(100, Math.round((kr.atual/kr.meta)*100)) : 0;
+    return a+p;
+  },0) / obj.krs.length;
+  return Math.round(avg);
+}
+
+function okrColor(pct){
+  if(pct>=80) return 'var(--green)';
+  if(pct>=50) return 'var(--accent)';
+  if(pct>=25) return 'var(--orange)';
+  return 'var(--red)';
+}
+
+function renderOKR(){
+  if(okrCurrentView==='dashboard') renderOKRDashboard();
+  else renderOKRLista();
+}
+
+function renderOKRDashboard(){
+  const total = okrs.length;
+  const totalKrs = okrs.reduce((a,o)=>a+(o.krs||[]).length,0);
+  const avgPct = total ? Math.round(okrs.reduce((a,o)=>a+okrPct(o),0)/total) : 0;
+  const onTrack = okrs.filter(o=>okrPct(o)>=50).length;
+
+  // KPIs
+  document.getElementById('okrKpis').innerHTML = `
+    <div class="okr-kpi"><div class="okr-kpi-icon">🎯</div><div><div class="okr-kpi-val">${total}</div><div class="okr-kpi-label">Objetivos</div></div></div>
+    <div class="okr-kpi"><div class="okr-kpi-icon">📊</div><div><div class="okr-kpi-val">${totalKrs}</div><div class="okr-kpi-label">Key Results</div></div></div>
+    <div class="okr-kpi"><div class="okr-kpi-icon">📈</div><div><div class="okr-kpi-val" style="color:${okrColor(avgPct)}">${avgPct}%</div><div class="okr-kpi-label">Progresso médio</div></div></div>
+    <div class="okr-kpi"><div class="okr-kpi-icon">✅</div><div><div class="okr-kpi-val" style="color:var(--green)">${onTrack}</div><div class="okr-kpi-label">No caminho (≥50%)</div></div></div>`;
+
+  // Charts
+  renderOKRCharts();
+
+  // Objetivos resumidos
+  document.getElementById('okrObjList').innerHTML = okrs.length
+    ? okrs.map(obj=>okrObjCard(obj)).join('')
+    : '<div class="empty"><p>Nenhum objetivo cadastrado ainda.<br>Clique em <strong>+ Objetivo</strong> para começar.</p></div>';
+}
+
+function renderOKRCharts(){
+  const box = document.getElementById('okrCharts');
+  if(!okrs.length){ box.innerHTML=''; return; }
+
+  // Gráfico 1 — Anéis por objetivo
+  const rings = okrs.map(obj=>{
+    const pct=okrPct(obj); const r=44; const circ=2*Math.PI*r;
+    const dash=Math.round((pct/100)*circ); const gap=circ-dash;
+    return `<div class="okr-ring" style="flex-direction:column;gap:6px">
+      <svg width="110" height="110" viewBox="0 0 110 110">
+        <circle cx="55" cy="55" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="10"/>
+        <circle cx="55" cy="55" r="${r}" fill="none" stroke="${obj.cor||'var(--accent)'}" stroke-width="10"
+          stroke-dasharray="${dash} ${gap}" stroke-linecap="round"
+          transform="rotate(-90 55 55)" style="transition:stroke-dasharray .6s"/>
+        <text x="55" y="51" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">${pct}%</text>
+        <text x="55" y="65" text-anchor="middle" font-size="9" fill="var(--text3)">progresso</text>
+      </svg>
+      <div style="font-size:.7rem;text-align:center;color:var(--text2);max-width:100px;line-height:1.3">${obj.titulo.slice(0,30)}${obj.titulo.length>30?'…':''}</div>
+    </div>`;
+  }).join('');
+
+  // Gráfico 2 — Barras horizontais por área
+  const areas = {};
+  okrs.forEach(obj=>{ const a=obj.area||'Geral'; if(!areas[a])areas[a]=[]; areas[a].push(okrPct(obj)); });
+  const barras = Object.entries(areas).map(([area,pcts])=>{
+    const avg=Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length);
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:.76rem;margin-bottom:4px">
+        <span style="color:var(--text2);font-weight:500">${area}</span>
+        <span style="color:${okrColor(avg)};font-weight:700">${avg}%</span>
+      </div>
+      <div style="background:var(--surface2);border-radius:4px;height:10px">
+        <div style="height:10px;border-radius:4px;background:${okrColor(avg)};width:${avg}%;transition:width .6s"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Gráfico 3 — Semáforo de status
+  const semaforo = [
+    {label:'🟢 No caminho', count:okrs.filter(o=>okrPct(o)>=70).length, color:'var(--green)'},
+    {label:'🟡 Em progresso', count:okrs.filter(o=>okrPct(o)>=30&&okrPct(o)<70).length, color:'var(--orange)'},
+    {label:'🔴 Atenção', count:okrs.filter(o=>okrPct(o)<30).length, color:'var(--red)'},
+  ];
+  const semaforoHtml = semaforo.map(s=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="width:40px;height:40px;border-radius:50%;background:${s.color};display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#fff;flex-shrink:0">${s.count}</div>
+      <div style="font-size:.84rem;color:var(--text2);font-weight:500">${s.label}</div>
+    </div>`).join('');
+
+  box.innerHTML = `
+    <div class="okr-chart-card">
+      <div class="okr-chart-title">Progresso por Objetivo</div>
+      <div class="okr-ring-wrap">${rings}</div>
+    </div>
+    <div class="okr-chart-card">
+      <div class="okr-chart-title">Progresso por Área</div>
+      ${barras||'<div style="color:var(--text4);font-size:.8rem">Nenhuma área cadastrada</div>'}
+    </div>
+    <div class="okr-chart-card">
+      <div class="okr-chart-title">Semáforo de Status</div>
+      ${semaforoHtml}
+    </div>`;
+}
+
+function okrObjCard(obj){
+  const pct = okrPct(obj);
+  const cor  = obj.cor||'var(--accent)';
+  const krs  = (obj.krs||[]).map(kr=>{
+    const kpct = kr.meta>0 ? Math.min(100,Math.round((kr.atual/kr.meta)*100)) : 0;
+    return `<div class="okr-kr">
+      <div class="okr-kr-title">${kr.titulo}</div>
+      <div class="okr-kr-mini"><div class="okr-kr-mini-fill" style="width:${kpct}%;background:${okrColor(kpct)}"></div></div>
+      <div class="okr-kr-vals">${kr.atual}/${kr.meta}${kr.unidade?'&nbsp;'+kr.unidade:''} · ${kpct}%</div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="openEditKr('${obj.id}','${kr.id}')" style="font-size:.7rem">✏️</button>
+    </div>`;
+  }).join('');
+
+  return `<div class="okr-obj">
+    <div class="okr-obj-header" onclick="openOkrModal('${obj.id}')">
+      <div class="okr-obj-dot" style="background:${cor}"></div>
+      <div class="okr-obj-title">${obj.titulo}</div>
+      <div style="font-size:.72rem;color:var(--text3);margin-right:8px">${obj.area||''} · ${obj.periodo||''}</div>
+      <div class="okr-obj-pct" style="color:${okrColor(pct)}">${pct}%</div>
+    </div>
+    <div class="okr-obj-bar-wrap"><div class="okr-obj-bar" style="width:${pct}%;background:${cor}"></div></div>
+    ${krs?`<div class="okr-krs">${krs}</div>`:''}
+  </div>`;
+}
+
+function renderOKRLista(){
+  document.getElementById('okrListaCompleta').innerHTML = okrs.length
+    ? okrs.map(obj=>okrObjCard(obj)).join('')
+    : '<div class="empty"><p>Nenhum objetivo cadastrado ainda.</p></div>';
+}
+
+// Modal OKR
+function openOkrModal(id){
+  editingOkrId = id||null;
+  const obj = id ? okrs.find(o=>o.id===id) : null;
+  document.getElementById('okrModalTitle').textContent = obj?'Editar Objetivo':'Novo Objetivo';
+  document.getElementById('okrTitulo').value  = obj?.titulo||'';
+  document.getElementById('okrArea').value    = obj?.area||'Comercial';
+  document.getElementById('okrPeriodo').value = obj?.periodo||'Q3 2026';
+  document.getElementById('okrCor').value     = obj?.cor||'#4f8ef7';
+  document.getElementById('okrDeleteBtn').style.display = obj?'inline-flex':'none';
+  // Destaca cor selecionada
+  document.querySelectorAll('.okr-cor-btn').forEach(b=>{
+    b.style.border = b.dataset.cor===(obj?.cor||'#4f8ef7') ? '3px solid var(--text)' : '2px solid transparent';
+  });
+  switchOkrTab('objetivo');
+  if(obj) renderKrList(obj);
+  document.getElementById('okrModal').classList.add('open');
+}
+function closeOkrModal(){ document.getElementById('okrModal').classList.remove('open'); editingOkrId=null; }
+document.getElementById('okrModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeOkrModal();});
+
+function switchOkrTab(tab){
+  document.querySelectorAll('#okrModal .modal-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='objetivo'?0:1)));
+  document.getElementById('okrTabObjetivo').classList.toggle('active',tab==='objetivo');
+  document.getElementById('okrTabKrs').classList.toggle('active',tab==='krs');
+}
+
+function okrSetCor(cor){
+  document.getElementById('okrCor').value = cor;
+  document.querySelectorAll('.okr-cor-btn').forEach(b=>{
+    b.style.border = b.dataset.cor===cor ? '3px solid var(--text)' : '2px solid transparent';
+  });
+}
+
+function saveOkrObj(){
+  const titulo = document.getElementById('okrTitulo').value.trim();
+  if(!titulo){ alert('Preencha o objetivo.'); return; }
+  const data = {
+    titulo, area: document.getElementById('okrArea').value,
+    periodo: document.getElementById('okrPeriodo').value,
+    cor: document.getElementById('okrCor').value,
+  };
+  if(editingOkrId){
+    const idx = okrs.findIndex(o=>o.id===editingOkrId);
+    if(idx>=0) okrs[idx]={...okrs[idx],...data};
+  } else {
+    const novo = {id:uid(),...data,krs:[],criadoEm:Date.now()};
+    okrs.unshift(novo);
+    editingOkrId = novo.id;
+  }
+  saveOkrs();
+  // Vai para aba de KRs
+  switchOkrTab('krs');
+  renderKrList(okrs.find(o=>o.id===editingOkrId));
+}
+
+function deleteOkr(){
+  if(!editingOkrId||!confirm('Excluir este objetivo e todos os KRs?'))return;
+  okrs=okrs.filter(o=>o.id!==editingOkrId);
+  saveOkrs(); closeOkrModal(); renderOKR();
+}
+
+// Key Results
+function renderKrList(obj){
+  const box = document.getElementById('okrKrList');
+  if(!box||!obj) return;
+  if(!obj.krs||!obj.krs.length){ box.innerHTML='<div style="font-size:.78rem;color:var(--text3);margin-bottom:8px">Nenhum KR adicionado ainda.</div>'; return; }
+  box.innerHTML = obj.krs.map((kr,i)=>{
+    const pct = kr.meta>0?Math.min(100,Math.round((kr.atual/kr.meta)*100)):0;
+    return `<div style="background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+      <div style="flex:1">
+        <div style="font-size:.82rem;font-weight:600;color:var(--text)">${kr.titulo}</div>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:2px">${kr.atual}/${kr.meta} ${kr.unidade||''} · <strong style="color:${okrColor(pct)}">${pct}%</strong></div>
+        <div style="background:var(--border);border-radius:3px;height:4px;margin-top:5px"><div style="height:4px;border-radius:3px;background:${okrColor(pct)};width:${pct}%"></div></div>
+      </div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="promptUpdateKr('${obj.id}','${kr.id}')" title="Atualizar valor">📝</button>
+      <button class="btn btn-danger btn-icon btn-sm" onclick="deleteKr('${obj.id}','${kr.id}')" title="Excluir">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function addKr(){
+  if(!editingOkrId){ alert('Salve o objetivo primeiro.'); return; }
+  const titulo  = document.getElementById('krTitulo').value.trim();
+  const meta    = parseFloat(document.getElementById('krMeta').value)||0;
+  const atual   = parseFloat(document.getElementById('krAtual').value)||0;
+  const unidade = document.getElementById('krUnidade').value.trim();
+  if(!titulo){ alert('Descreva o Key Result.'); return; }
+  const obj = okrs.find(o=>o.id===editingOkrId);
+  if(!obj) return;
+  if(!obj.krs) obj.krs=[];
+  obj.krs.push({id:uid(),titulo,meta,atual,unidade});
+  saveOkrs();
+  document.getElementById('krTitulo').value='';
+  document.getElementById('krMeta').value='';
+  document.getElementById('krAtual').value='';
+  document.getElementById('krUnidade').value='';
+  renderKrList(obj);
+}
+
+function deleteKr(objId,krId){
+  const obj=okrs.find(o=>o.id===objId);
+  if(!obj)return;
+  obj.krs=obj.krs.filter(k=>k.id!==krId);
+  saveOkrs(); renderKrList(obj);
+}
+
+function promptUpdateKr(objId,krId){
+  const obj=okrs.find(o=>o.id===objId);
+  const kr=obj?.krs?.find(k=>k.id===krId);
+  if(!kr)return;
+  const val=prompt(`Atualizar "${kr.titulo}"\nMeta: ${kr.meta} ${kr.unidade||''}\n\nValor atual:`,kr.atual);
+  if(val===null)return;
+  const n=parseFloat(val);
+  if(isNaN(n)){alert('Valor inválido.');return;}
+  kr.atual=n;
+  saveOkrs(); renderKrList(obj); renderOKR();
+}
+
+function openEditKr(objId,krId){
+  openOkrModal(objId);
+  setTimeout(()=>switchOkrTab('krs'),100);
+}
 //  Publica um Gist público separado com dados
 //  estruturados da semana para leitura externa
 // ═══════════════════════════════════════════
@@ -3354,7 +3805,8 @@ const PI_ROTATIONS = [-2.5,-1.8,-1.2,-0.6,0.5,0.9,1.5,2.1,-0.3,1.8,-1.5,0.7];
 let piMaxZ = 10;
 
 let postits = lsGet('ag2_postits', []);
-function savePostits(){ lsSet('ag2_postits', postits); if(G.ok()) syncPush(true); }
+function savePostits(){ lsSet('ag2_postits', postits);
+    lsSet('ag2_okrs',    okrs); if(G.ok()) syncPush(true); }
 
 function escHtml(str){ return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -4581,11 +5033,13 @@ if(G.ok()){
     minutas = remote.minutas || minutas;
     backlog = remote.backlog || backlog;
     postits = remote.postits || postits;
+    okrs    = remote.okrs    || okrs;
     lsSet('ag2_agenda',  agenda);
     lsSet('ag2_tasks',   tasks);
     lsSet('ag2_minutas', minutas);
     lsSet('ag2_backlog', backlog);
     lsSet('ag2_postits', postits);
+    lsSet('ag2_okrs',    okrs);
     // NÃO atualiza ag_my_push aqui — só atualiza quando EU envio
     renderAll();
     addLog(`✅ Dados recebidos do Gist (ts: ${remoteTs})`);
