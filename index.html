@@ -1473,9 +1473,16 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(()=>cac
       <div class="form-group">
         <label class="form-label">Cor de identificação</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${['#4f8ef7','#3ecf8e','#f7934f','#f76f6f','#a78bfa','#f472b6','#34d399','#fbbf24'].map((c,i)=>
-            `<div onclick="okrSetCor('${c}')" style="width:24px;height:24px;border-radius:50%;background:${c};cursor:pointer;border:2px solid transparent;transition:transform .12s" class="okr-cor-btn" data-cor="${c}"></div>`
-          ).join('')}
+          <div onclick="okrSetCor('#4f8ef7')" class="okr-cor-btn" data-cor="#4f8ef7" style="width:26px;height:26px;border-radius:50%;background:#4f8ef7;cursor:pointer;border:2px solid transparent;transition:transform .12s,border .1s"></div>
+          <div onclick="okrSetCor('#3ecf8e')" class="okr-cor-btn" data-cor="#3ecf8e" style="width:26px;height:26px;border-radius:50%;background:#3ecf8e;cursor:pointer;border:2px solid transparent;transition:transform .12s,border .1s"></div>
+          <div onclick="okrSetCor('#f7934f')" class="okr-cor-btn" data-cor="#f7934f" style="width:26px;height:26px;border-radius:50%;background:#f7934f;cursor:pointer;border:2px solid transparent;transition:transform .12s,border .1s"></div>
+          <div onclick="okrSetCor('#f76f6f')" class="okr-cor-btn" data-cor="#f76f6f" style="width:26px;height:26px;border-radius:50%;background:#f76f6f;cursor:pointer;border:2px solid transparent;transition:transform .12s,border .1s"></div>
+          <div onclick="okrSetCor('#a78bfa')" class="okr-cor-btn" data-cor="#a78bfa" style="width:26px;height:26px;border-radius:50%;background:#a78bfa;cursor:pointer;border:2px solid transparent;transition:transform .12s,border .1s"></div>
+          <div onclick="okrSetCor('#f472b6')" class="okr-cor-btn" data-cor="#f472b6" style="width:26px;height:26px;border-radius:50%;background:#f472b6;cursor:pointer;border:2px solid transparent;transition:transform .12s,border .1s"></div>
+          <div onclick="okrSetCor('#34d399')" class="okr-cor-btn" data-cor="#34d399" style="width:26px;height:26px;border-radius:50%;background:#34d399;cursor:pointer;border:2px solid transparent;transition:transform .12s,border .1s"></div>
+          <div onclick="okrSetCor('#fbbf24')" class="okr-cor-btn" data-cor="#fbbf24" style="width:26px;height:26px;border-radius:50%;background:#fbbf24;cursor:pointer;border:2px solid transparent;transition:transform .12s,border .1s"></div>
+          <div onclick="okrSetCor('#06b6d4')" class="okr-cor-btn" data-cor="#06b6d4" style="width:26px;height:26px;border-radius:50%;background:#06b6d4;cursor:pointer;border:2px solid transparent;transition:transform .12s,border .1s"></div>
+          <div onclick="okrSetCor('#0e3a6e')" class="okr-cor-btn" data-cor="#0e3a6e" style="width:26px;height:26px;border-radius:50%;background:#0e3a6e;cursor:pointer;border:2px solid transparent;transition:transform .12s,border .1s"></div>
         </div>
         <input type="hidden" id="okrCor" value="#4f8ef7">
       </div>
@@ -3334,9 +3341,11 @@ function okrObjCard(obj){
 }
 
 function renderOKRLista(){
-  document.getElementById('okrListaCompleta').innerHTML = okrs.length
+  const box = document.getElementById('okrListaCompleta');
+  if(!box) return;
+  box.innerHTML = okrs.length
     ? okrs.map(obj=>okrObjCard(obj)).join('')
-    : '<div class="empty"><p>Nenhum objetivo cadastrado ainda.</p></div>';
+    : '<div class="empty" style="grid-column:1/-1"><p>Nenhum objetivo cadastrado ainda.</p></div>';
 }
 
 // Modal OKR
