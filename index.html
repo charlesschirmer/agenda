@@ -3292,14 +3292,17 @@ function renderOKRCharts(){
 
   // Gráfico 3 — Semáforo de status
   const semaforo = [
-    {label:'🟢 No caminho', count:okrs.filter(o=>okrPct(o)>=70).length, color:'var(--green)'},
-    {label:'🟡 Em progresso', count:okrs.filter(o=>okrPct(o)>=30&&okrPct(o)<70).length, color:'var(--orange)'},
-    {label:'🔴 Atenção', count:okrs.filter(o=>okrPct(o)<30).length, color:'var(--red)'},
+    {label:'🟢 No caminho',  count:okrs.filter(o=>okrPct(o)>=50).length, color:'var(--green)'},
+    {label:'🟡 Em progresso',count:okrs.filter(o=>okrPct(o)>=20&&okrPct(o)<50).length, color:'var(--orange)'},
+    {label:'🔴 Atenção',     count:okrs.filter(o=>okrPct(o)<20).length,  color:'var(--red)'},
   ];
   const semaforoHtml = semaforo.map(s=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
-      <div style="width:40px;height:40px;border-radius:50%;background:${s.color};display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#fff;flex-shrink:0">${s.count}</div>
-      <div style="font-size:.84rem;color:var(--text2);font-weight:500">${s.label}</div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:38px;height:38px;border-radius:50%;background:${s.color};display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;flex-shrink:0">${s.count}</div>
+      <div>
+        <div style="font-size:.84rem;color:var(--text2);font-weight:600">${s.label}</div>
+        <div style="font-size:.7rem;color:var(--text4)">${s.label.includes('caminho')?'≥ 50%':s.label.includes('progresso')?'20% – 49%':'< 20%'}</div>
+      </div>
     </div>`).join('');
 
   box.innerHTML = `
