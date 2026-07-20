@@ -3206,6 +3206,8 @@ function okrShowView(v){
   document.getElementById('okrViewLista').style.display     = v==='lista'?'block':'none';
   document.getElementById('okrBtnDash').className = 'btn btn-sm ' + (v==='dashboard'?'btn-primary':'btn-ghost');
   document.getElementById('okrBtnList').className = 'btn btn-sm ' + (v==='lista'?'btn-primary':'btn-ghost');
+  if(v==='lista')     renderOKRLista();
+  if(v==='dashboard') renderOKRDashboard();
 }
 
 function okrPct(obj){
