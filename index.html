@@ -3293,7 +3293,7 @@ function renderOKRCharts(){
   // Gráfico 3 — Semáforo de status
   const semaforo = [
     {label:'🟢 No caminho',  count:okrs.filter(o=>okrPct(o)>=50).length, color:'var(--green)'},
-    {label:'🟡 Em progresso',count:okrs.filter(o=>okrPct(o)>=20&&okrPct(o)<50).length, color:'var(--orange)'},
+    {label:'🟡 Em progresso',count:okrs.filter(o=>okrPct(o)>=20&&okrPct(o)<50).length, color:'#f0b429'},
     {label:'🔴 Atenção',     count:okrs.filter(o=>okrPct(o)<20).length,  color:'var(--red)'},
   ];
   const semaforoHtml = semaforo.map(s=>`
